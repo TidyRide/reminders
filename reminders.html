@@ -681,6 +681,22 @@ I'll be here until {{time}} on {{date}} — pop in any time before then. If you 
 {{signature}}`
     },
     {
+      id: 'payment-reminder',
+      name: 'Payment reminder',
+      description: 'Chase outstanding money after the job.',
+      fields: ['customerName', 'date', 'service', 'amount'],
+      body:
+`Hi {{customerName}},
+
+Hope you're pleased with your {{service}} on {{date}} — just a friendly reminder that payment of {{amount}} is still outstanding.
+
+You can pay by card or bank transfer here: https://www.tidyride.co.uk/pay
+
+If you've already sent it across, please ignore this message. Any questions, just let me know.
+
+{{signature}}`
+    },
+    {
       id: 'ask-review',
       name: 'Ask for a review',
       description: 'Send after the job is done. Includes Google review link.',
@@ -1596,14 +1612,14 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (_dragCount === 0) dropOverlay.classList.remove('active');
   });
   document.addEventListener('dragover', e => {
-    if (_dragCount > 0) e.preventDefault(); // allow drop
+    e.preventDefault(); // must always prevent default to allow drop
   });
   document.addEventListener('drop', async e => {
     _dragCount = 0;
     dropOverlay.classList.remove('active');
+    e.preventDefault(); // prevent BEFORE any async — stops Safari navigating to the .ics file
     const ics = await getICSFromDrop(e.dataTransfer);
     if (!ics) return;
-    e.preventDefault();
     const parsed = parseICS(ics);
     if (parsed) openCalendarModal(parsed);
     else showToast('Couldn\'t read that event — try again');
