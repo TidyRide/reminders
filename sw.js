@@ -31,6 +31,18 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// ── Notification click — open/focus the app ───────────────────────────────────
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const existing = list.find(c => c.url.includes('reminders.html') && 'focus' in c);
+      if (existing) return existing.focus();
+      return clients.openWindow('./reminders.html');
+    })
+  );
+});
+
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);

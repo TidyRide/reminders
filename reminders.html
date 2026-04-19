@@ -466,6 +466,41 @@
     .drop-overlay-inner p { font-size: 20px; font-weight: 600; margin: 0; }
     .drop-overlay-inner small { font-size: 13px; color: var(--text-muted); font-weight: 400; }
 
+    /* ---------- Reminders list ---------- */
+    .reminder-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .reminder-row:last-child { border-bottom: none; }
+    .reminder-info { flex: 1; min-width: 160px; }
+    .reminder-name { font-weight: 600; font-size: 14px; }
+    .reminder-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
+    .reminder-when {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      min-width: 140px;
+    }
+    .reminder-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+    .badge.upcoming { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+    .badge.due      { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge.overdue  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    html[data-theme="dark"] .badge.due     { background: #78350f; color: #fde68a; border-color: #b45309; }
+    html[data-theme="dark"] .badge.overdue { background: #7f1d1d; color: #fca5a5; border-color: #dc2626; }
+
     /* ---------- Misc ---------- */
     .muted { color: var(--text-muted); }
     .sr-only {
@@ -496,6 +531,14 @@
       <section class="card col-wide">
         <h2>1. Choose a message</h2>
         <div class="templates" id="templatePicker" role="radiogroup" aria-label="Message templates"></div>
+      </section>
+
+      <!-- Scheduled reminders — only shown when reminders exist -->
+      <section class="card col-wide" id="remindersSection" hidden aria-label="Scheduled reminders">
+        <div class="card-header">
+          <h2>Scheduled reminders</h2>
+        </div>
+        <div id="remindersBody"></div>
       </section>
 
       <section class="card">
@@ -535,6 +578,10 @@
           <button class="btn" id="emailBtn">
             <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Send Email
+          </button>
+          <button class="btn" id="scheduleBtn">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Schedule
           </button>
         </div>
       </section>
@@ -581,6 +628,42 @@
       <footer>
         <button class="btn" id="calendarModalCancel">Cancel</button>
         <button class="btn primary" id="calendarModalFill">Fill form</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Schedule reminder modal -->
+  <div class="modal-backdrop" id="scheduleModal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+    <div class="modal">
+      <header>
+        <h2 id="scheduleModalTitle">Schedule a reminder</h2>
+        <button class="btn icon" id="scheduleModalClose" aria-label="Close">✕</button>
+      </header>
+      <p class="muted" style="margin-top:-6px;font-size:13px;">Pick a date and time — when you open the app on that day the reminder will be waiting with this message ready to send.</p>
+      <div class="fields two-col">
+        <div class="field">
+          <label for="sch_date">Remind me on</label>
+          <input class="input" id="sch_date" type="date">
+          <div class="quick-dates" id="sch_date_quick">
+            <button type="button" data-offset="0">Today</button>
+            <button type="button" data-offset="1">Tomorrow</button>
+            <button type="button" data-offset="2">In 2 days</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="sch_time">At</label>
+          <input class="input" id="sch_time" type="time">
+          <div class="quick-dates" id="sch_time_quick">
+            <button type="button" data-time="08:00">8am</button>
+            <button type="button" data-time="09:00">9am</button>
+            <button type="button" data-time="10:00">10am</button>
+            <button type="button" data-time="17:00">5pm</button>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn" id="scheduleModalCancel">Cancel</button>
+        <button class="btn primary" id="scheduleModalSave">Save reminder</button>
       </footer>
     </div>
   </div>
@@ -788,6 +871,17 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {}
   }
 
+  const REMINDER_KEY = 'tidyride.reminders.queue.v1';
+  function loadReminderQueue() {
+    try {
+      const raw = localStorage.getItem(REMINDER_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveReminderQueue(q) {
+    try { localStorage.setItem(REMINDER_KEY, JSON.stringify(q)); } catch (e) {}
+  }
+
   /* =========================================================================
      STATE
      ========================================================================= */
@@ -807,7 +901,8 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       customerEmail: '',
       signature: ''         // initialized from settings at bootstrap
     },
-    settings: loadSettings()
+    settings: loadSettings(),
+    reminderQueue: loadReminderQueue()
   };
   // Prefill signature from settings so the form and preview reflect it immediately
   state.form.signature = state.settings.signature || '';
@@ -1730,14 +1825,212 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   });
 
   /* =========================================================================
+     REMINDER QUEUE
+     ========================================================================= */
+  function generateId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function renderReminders() {
+    const section = document.getElementById('remindersSection');
+    const body    = document.getElementById('remindersBody');
+    if (!section || !body) return;
+    const q = state.reminderQueue;
+
+    if (q.length === 0) { section.hidden = true; return; }
+    section.hidden = false;
+    body.innerHTML = '';
+
+    const now = new Date();
+    q.slice().sort((a, b) => new Date(a.sendAt) - new Date(b.sendAt)).forEach(r => {
+      const sendAt     = new Date(r.sendAt);
+      const isOverdue  = sendAt < now;
+      const isDueToday = !isOverdue && sendAt.toDateString() === now.toDateString();
+      const statusClass = isOverdue ? 'overdue' : (isDueToday ? 'due' : 'upcoming');
+      const statusLabel = isOverdue ? 'Overdue'  : (isDueToday ? 'Due today' : 'Upcoming');
+
+      const tpl      = TEMPLATES.find(t => t.id === r.templateId);
+      const tplName  = tpl ? tpl.name : r.templateId;
+      const datePart = formatDate(r.sendAt.slice(0, 10));
+      const timePart = r.sendAt.length >= 16 ? formatTime(r.sendAt.slice(11, 16)) : '';
+
+      const row = document.createElement('div');
+      row.className = 'reminder-row';
+
+      const info = document.createElement('div');
+      info.className = 'reminder-info';
+      info.innerHTML = `<div class="reminder-name">${escapeHtml(r.form.customerName || 'Unnamed customer')}</div><div class="reminder-meta">${escapeHtml(tplName)}</div>`;
+
+      const when = document.createElement('div');
+      when.className = 'reminder-when';
+      when.innerHTML = `${escapeHtml(datePart)}${timePart ? ' at ' + escapeHtml(timePart) : ''}<span class="badge ${statusClass}">${statusLabel}</span>`;
+
+      const actions = document.createElement('div');
+      actions.className = 'reminder-actions';
+
+      const loadBtn = document.createElement('button');
+      loadBtn.className = 'btn primary';
+      loadBtn.textContent = 'Load & send';
+      loadBtn.addEventListener('click', () => loadReminderIntoForm(r.id));
+
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'btn icon';
+      dismissBtn.title = 'Dismiss reminder';
+      dismissBtn.setAttribute('aria-label', 'Dismiss');
+      dismissBtn.textContent = '✕';
+      dismissBtn.addEventListener('click', () => dismissReminder(r.id));
+
+      actions.appendChild(loadBtn);
+      actions.appendChild(dismissBtn);
+      row.appendChild(info);
+      row.appendChild(when);
+      row.appendChild(actions);
+      body.appendChild(row);
+    });
+  }
+
+  /* ---- Schedule modal ---- */
+  const schedModal = document.getElementById('scheduleModal');
+
+  function openScheduleModal() {
+    const tpl = getTemplate();
+    if (!tpl) { showToast('Pick a template first'); return; }
+    document.getElementById('sch_date').value = todayISO(1);
+    document.getElementById('sch_time').value = '09:00';
+    schedModal.classList.add('open');
+  }
+  function closeScheduleModal() { schedModal.classList.remove('open'); }
+
+  function saveReminder() {
+    const dateVal = document.getElementById('sch_date').value;
+    const timeVal = document.getElementById('sch_time').value;
+    if (!dateVal) { showToast('Pick a date for the reminder'); return; }
+    const sendAt = timeVal ? `${dateVal}T${timeVal}:00` : `${dateVal}T09:00:00`;
+
+    const tpl = getTemplate();
+    const reminder = {
+      id:         generateId(),
+      createdAt:  new Date().toISOString(),
+      sendAt,
+      templateId: tpl.id,
+      form:       { ...state.form },
+      notified:   false
+    };
+    state.reminderQueue.push(reminder);
+    saveReminderQueue(state.reminderQueue);
+    closeScheduleModal();
+    renderReminders();
+    showToast('Reminder saved');
+    requestNotificationPermission();
+    scheduleSessionNotification(reminder);
+  }
+
+  function loadReminderIntoForm(id) {
+    const r = state.reminderQueue.find(x => x.id === id);
+    if (!r) return;
+    state.templateId = r.templateId;
+    state.manualEdit = false;
+    Object.assign(state.form, r.form);
+    state.reminderQueue = state.reminderQueue.filter(x => x.id !== id);
+    saveReminderQueue(state.reminderQueue);
+    renderAll();
+    showToast('Reminder loaded — review and send');
+    document.getElementById('preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function dismissReminder(id) {
+    state.reminderQueue = state.reminderQueue.filter(x => x.id !== id);
+    saveReminderQueue(state.reminderQueue);
+    renderReminders();
+    showToast('Reminder dismissed');
+  }
+
+  /* ---- Notifications ---- */
+  function requestNotificationPermission() {
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    Notification.requestPermission();
+  }
+
+  function checkDueReminders() {
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    const now = new Date();
+    let changed = false;
+    state.reminderQueue.forEach(r => {
+      if (!r.notified && new Date(r.sendAt) <= now) {
+        r.notified = true;
+        changed = true;
+        const tpl   = TEMPLATES.find(t => t.id === r.templateId);
+        const title = `TidyRide reminder: ${r.form.customerName || 'Customer'}`;
+        const body  = tpl ? tpl.name : 'Tap to open';
+        navigator.serviceWorker.ready
+          .then(reg => reg.showNotification(title, { body, icon: './icon-192.png', tag: r.id }))
+          .catch(() => {});
+      }
+    });
+    if (changed) saveReminderQueue(state.reminderQueue);
+  }
+
+  const _sessionTimers = new Map();
+  function scheduleSessionNotification(reminder) {
+    if (!('Notification' in window)) return;
+    const delay = new Date(reminder.sendAt) - Date.now();
+    if (delay <= 0 || delay > 4 * 60 * 60 * 1000) return; // only within 4 hours
+    const timer = setTimeout(() => {
+      _sessionTimers.delete(reminder.id);
+      const r = state.reminderQueue.find(x => x.id === reminder.id);
+      if (r) { r.notified = true; saveReminderQueue(state.reminderQueue); renderReminders(); }
+      if (Notification.permission !== 'granted') return;
+      const tpl   = TEMPLATES.find(t => t.id === reminder.templateId);
+      const title = `TidyRide reminder: ${reminder.form.customerName || 'Customer'}`;
+      const body  = tpl ? tpl.name : 'Tap to open';
+      navigator.serviceWorker.ready
+        .then(reg => reg.showNotification(title, { body, icon: './icon-192.png', tag: reminder.id }))
+        .catch(() => {
+          if ('Notification' in window) new Notification(title, { body, icon: './icon-192.png' });
+        });
+    }, delay);
+    _sessionTimers.set(reminder.id, timer);
+  }
+
+  function scheduleSessionNotifications() {
+    state.reminderQueue.forEach(r => { if (!r.notified) scheduleSessionNotification(r); });
+  }
+
+  /* ---- Schedule modal event listeners ---- */
+  document.getElementById('scheduleBtn').addEventListener('click', openScheduleModal);
+  document.getElementById('scheduleModalClose').addEventListener('click', closeScheduleModal);
+  document.getElementById('scheduleModalCancel').addEventListener('click', closeScheduleModal);
+  schedModal.addEventListener('click', e => { if (e.target === schedModal) closeScheduleModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && schedModal.classList.contains('open')) closeScheduleModal();
+  });
+  document.getElementById('scheduleModalSave').addEventListener('click', saveReminder);
+
+  document.getElementById('sch_date_quick').querySelectorAll('[data-offset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('sch_date').value = todayISO(Number(btn.dataset.offset));
+    });
+  });
+  document.getElementById('sch_time_quick').querySelectorAll('[data-time]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('sch_time').value = btn.dataset.time;
+    });
+  });
+
+  /* =========================================================================
      BOOTSTRAP
      ========================================================================= */
   function renderAll() {
     renderTemplates();
     renderForm();
     renderPreview();
+    renderReminders();
   }
   renderAll();
+  checkDueReminders();
+  scheduleSessionNotifications();
 
   // Hint on first load if business address is missing
   if (!state.settings.businessAddress) {
