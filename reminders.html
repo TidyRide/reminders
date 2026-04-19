@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f1724">
+  <title>TidyRide — Customer Reminders</title>
+
+  <!-- PWA / Add to Home Screen -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TR Reminders">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    /* ---------- Theme tokens ---------- */
+    :root {
+      --bg:            #f5f7fa;
+      --surface:       #ffffff;
+      --surface-2:     #f0f3f7;
+      --surface-hover: #e9edf2;
+      --border:        #d7dde5;
+      --border-strong: #b8c0cc;
+      --text:          #16202b;
+      --text-muted:    #5a6573;
+      --text-soft:     #7a8494;
+      --accent:        #2f6bed;
+      --accent-hover:  #2558d0;
+      --accent-text:   #ffffff;
+      --success:       #138a43;
+      --danger:        #c93030;
+      --ring:          rgba(47,107,237,0.35);
+      --shadow-sm:     0 1px 2px rgba(16,24,40,0.06), 0 1px 3px rgba(16,24,40,0.05);
+      --shadow-md:     0 4px 12px rgba(16,24,40,0.08), 0 2px 4px rgba(16,24,40,0.05);
+      --radius:        10px;
+      --radius-sm:     6px;
+      --gap:           16px;
+    }
+    html[data-theme="dark"] {
+      --bg:            #0f1724;
+      --surface:       #172131;
+      --surface-2:     #1f2b3e;
+      --surface-hover: #27344a;
+      --border:        #2c3a53;
+      --border-strong: #3e4e6b;
+      --text:          #e7ecf3;
+      --text-muted:    #a7b2c2;
+      --text-soft:     #8a95a8;
+      --accent:        #5b8cff;
+      --accent-hover:  #7aa0ff;
+      --accent-text:   #0b1220;
+      --success:       #4ade80;
+      --danger:        #f87171;
+      --ring:          rgba(91,140,255,0.45);
+      --shadow-sm:     0 1px 2px rgba(0,0,0,0.4);
+      --shadow-md:     0 6px 16px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* ---------- Base ---------- */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    h1, h2, h3 { margin: 0; font-weight: 600; }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    a { color: var(--accent); }
+
+    /* ---------- Layout ---------- */
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      /* Extra padding when running as a standalone PWA (notch / Dynamic Island) */
+      padding: max(20px, calc(env(safe-area-inset-top) + 8px))
+               max(20px, env(safe-area-inset-right))
+               max(20px, calc(env(safe-area-inset-bottom) + 8px))
+               max(20px, env(safe-area-inset-left));
+    }
+    header.top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    header.top .brand {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+    header.top .brand h1 {
+      font-size: 20px;
+      letter-spacing: -0.01em;
+    }
+    header.top .brand .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    header.top .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 900px) {
+      main {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+      }
+      .col-wide { grid-column: 1 / -1; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 18px;
+    }
+    .card h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .card-header h2 { margin-bottom: 0; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+      user-select: none;
+    }
+    .btn:hover { background: var(--surface-hover); }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-color: var(--accent);
+    }
+    .btn.primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+    .btn.icon {
+      padding: 8px 10px;
+      min-width: 38px;
+    }
+    .btn.ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .btn.ghost:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+    .btn .icon-svg { width: 16px; height: 16px; flex: none; }
+
+    /* ---------- Template picker ---------- */
+    .templates {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .template-card {
+      text-align: left;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      color: var(--text);
+    }
+    .template-card:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-hover);
+    }
+    .template-card.selected {
+      border-color: var(--accent);
+      background: var(--surface-hover);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+    .template-card .name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .template-card .desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    /* ---------- Form ---------- */
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 520px) {
+      .fields.two-col { grid-template-columns: 1fr 1fr; }
+      .field.full { grid-column: 1 / -1; }
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .field label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .field .hint {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+    .input, .textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .input:focus, .textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+    .input[disabled] {
+      background: var(--surface-2);
+      color: var(--text-soft);
+      cursor: not-allowed;
+    }
+    .input-prefix {
+      position: relative;
+    }
+    .input-prefix .prefix {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .input-prefix .input { padding-left: 24px; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .checkbox-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    .empty {
+      padding: 30px 10px;
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    /* ---------- Preview ---------- */
+    .preview {
+      display: block;
+      width: 100%;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--surface-2);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      min-height: 140px;
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: var(--text);
+      resize: vertical;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .preview:focus {
+      outline: none;
+      border-color: var(--accent);
+      border-style: solid;
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+    .preview:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    .preview-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .preview-actions .btn { flex: 1 1 auto; min-width: 120px; }
+
+    .sms-counter {
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .sms-counter.warn  { color: #b5761a; font-weight: 500; }
+    .sms-counter.over  { color: var(--danger); font-weight: 500; }
+    html[data-theme="dark"] .sms-counter.warn { color: #f5b454; }
+
+    .quick-dates {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .quick-dates button {
+      padding: 4px 10px;
+      font-size: 12.5px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .quick-dates button:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .quick-dates button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 16px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-md);
+      font-size: 13.5px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ---------- Modal ---------- */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(10,15,25,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow: auto;
+      padding: 20px;
+    }
+    .modal header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .modal header h2 {
+      font-size: 17px;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--text);
+    }
+    .modal footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    /* ---------- Calendar drop overlay ---------- */
+    .drop-overlay {
+      position: fixed; inset: 0;
+      background: rgba(47,107,237,0.10);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      border: 3px dashed var(--accent);
+      pointer-events: none;
+    }
+    .drop-overlay.active { display: flex; }
+    .drop-overlay-inner {
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 32px 48px;
+      text-align: center;
+      color: var(--accent);
+    }
+    .drop-overlay-inner svg { width: 44px; height: 44px; margin-bottom: 10px; display: block; margin-inline: auto; }
+    .drop-overlay-inner p { font-size: 20px; font-weight: 600; margin: 0; }
+    .drop-overlay-inner small { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+
+    /* ---------- Misc ---------- */
+    .muted { color: var(--text-muted); }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <h1>TidyRide — Customer Reminders</h1>
+        <span class="subtitle" id="brandSubtitle">Pick a template, fill in the details, send.</span>
+      </div>
+      <div class="actions">
+        <button class="btn icon" id="themeToggle" title="Toggle light/dark" aria-label="Toggle theme">
+          <svg class="icon-svg" id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button class="btn icon" id="settingsBtn" title="Settings" aria-label="Open settings">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card col-wide">
+        <h2>1. Choose a message</h2>
+        <div class="templates" id="templatePicker" role="radiogroup" aria-label="Message templates"></div>
+      </section>
+
+      <section class="card">
+        <h2>2. Fill in the details</h2>
+        <div id="formPanel"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>3. Preview &amp; send</h2>
+          <div style="display:flex;gap:6px;">
+            <button class="btn ghost" id="resetDraftBtn" hidden title="Undo manual edits and restore from fields above">↺ Reset draft</button>
+            <button class="btn ghost" id="resetBtn" hidden title="Clear all form fields and start a new customer">New customer</button>
+          </div>
+        </div>
+        <textarea class="preview" id="preview" spellcheck="true" aria-label="Message preview — editable" disabled>Pick a template above to start.</textarea>
+        <div id="autoExpandRow" hidden style="margin-top:8px;">
+          <label class="checkbox-row" style="font-size:13px;color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" id="autoExpandToggle" checked>
+            Auto-expand to show full message
+          </label>
+        </div>
+        <div class="sms-counter" id="smsCounter" hidden></div>
+        <div class="preview-actions" id="previewActions" hidden>
+          <button class="btn primary" id="copyBtn">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button class="btn" id="smsBtn">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Send SMS
+          </button>
+          <button class="btn" id="whatsappBtn">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn" id="emailBtn">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Send Email
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal">
+      <header>
+        <h2 id="settingsTitle">Business settings</h2>
+        <button class="btn icon" id="settingsClose" aria-label="Close">✕</button>
+      </header>
+      <p class="muted" style="margin-top:-6px;font-size:13px;">Saved in this browser only. These fill placeholders like <code>{{businessName}}</code> and the default Location.</p>
+      <div class="fields two-col" id="settingsFields"></div>
+      <footer>
+        <button class="btn" id="settingsCancel">Cancel</button>
+        <button class="btn primary" id="settingsSave">Save</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Calendar drag-and-drop overlay -->
+  <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
+    <div class="drop-overlay-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <p>Drop calendar event</p>
+      <small>Fills the form from your event details</small>
+    </div>
+  </div>
+
+  <!-- Calendar event confirmation modal -->
+  <div class="modal-backdrop" id="calendarModal" role="dialog" aria-modal="true" aria-labelledby="calendarModalTitle">
+    <div class="modal">
+      <header>
+        <h2 id="calendarModalTitle">
+          <svg style="width:16px;height:16px;vertical-align:-2px;margin-right:6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Calendar event
+        </h2>
+        <button class="btn icon" id="calendarModalClose" aria-label="Close">✕</button>
+      </header>
+      <p class="muted" style="margin-top:-6px;font-size:13px;">Check the details below then click <strong>Fill form</strong>. Works with any message template — edit anything that looks off.</p>
+      <div class="fields two-col" id="calendarModalFields"></div>
+      <footer>
+        <button class="btn" id="calendarModalCancel">Cancel</button>
+        <button class="btn primary" id="calendarModalFill">Fill form</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  'use strict';
+
+  /* =========================================================================
+     TEMPLATES — edit these later
+     -------------------------------------------------------------------------
+     Each template has:
+       id            unique string
+       name          shown on the card
+       description   one-line hint under the card title
+       fields        which input fields to show, from the list:
+                       customerName, date, time, location, service, amount,
+                       customerPhone, customerEmail
+       body          the message. Use placeholders in {{doubleBraces}}.
+                     Available placeholders:
+                       {{customerName}}  — from form
+                       {{date}}          — from form (formatted Sat 18 Apr 2026)
+                       {{time}}          — from form (formatted 2:30pm)
+                       {{location}}      — from form OR business address if ticked
+                       {{service}}       — from form
+                       {{amount}}        — from form (formatted £45.00)
+                       {{businessName}}  — from Settings
+                       {{businessPhone}} — from Settings
+                       {{businessEmail}} — from Settings
+                       {{reviewLink}}    — from Settings (Google review URL)
+                       {{signature}}     — sign-off, defaults from Settings,
+                                           editable per-message in the form
+     ========================================================================= */
+  const TEMPLATES = [
+    {
+      id: 'ask-deposit',
+      name: 'Ask for deposit',
+      description: 'Use when taking a booking over the phone.',
+      fields: ['customerName', 'date', 'time', 'location', 'service', 'amount'],
+      body:
+`Hi {{customerName}},
+
+Thanks for booking with {{businessName}}. To secure your slot on {{date}} at {{time}} for your {{service}}, please send a deposit of {{amount}}.
+
+Card or bank transfer details can be found here: https://www.tidyride.co.uk/pay
+
+Location: {{location}}
+
+Let me know once it's sent and I'll confirm the booking.
+
+{{signature}}`
+    },
+    {
+      id: 'deposit-received',
+      name: 'Deposit received',
+      description: 'Confirmation once the deposit has landed.',
+      fields: ['customerName', 'date', 'time', 'service', 'amount'],
+      body:
+`Hi {{customerName}},
+
+Just confirming I've received your {{amount}} deposit — your {{service}} is booked in for {{date}} at {{time}}.
+
+Any changes, please call or text me on {{businessPhone}}.
+
+{{signature}}`
+    },
+    {
+      id: 'appointment-reminder',
+      name: 'Appointment reminder',
+      description: 'Friendly nudge the day before.',
+      fields: ['customerName', 'date', 'time', 'location', 'service'],
+      body:
+`Hi {{customerName}},
+
+Quick reminder — your {{service}} is booked with {{businessName}} on {{date}} at {{time}}.
+
+Location: {{location}}
+
+If there are any changes or issues, please let me know.
+
+See you then!
+
+{{signature}}`
+    },
+    {
+      id: 'ready-to-collect',
+      name: 'Ready to collect',
+      description: "Vehicle's finished — time to come pick it up.",
+      fields: ['customerName', 'date', 'time', 'location'],
+      body:
+`Hi {{customerName}},
+
+Good news — your vehicle's all finished and ready to collect from {{location}}.
+
+I'll be here until {{time}} on {{date}} — pop in any time before then. If you need to collect later, just let me know.
+
+{{signature}}`
+    },
+    {
+      id: 'ask-review',
+      name: 'Ask for a review',
+      description: 'Send after the job is done. Includes Google review link.',
+      fields: ['customerName'],
+      body:
+`Hi {{customerName}},
+
+Thanks for choosing {{businessName}} — hope you're pleased with the results!
+
+If you've got 30 seconds, a quick Google review would really help the business: {{reviewLink}}
+
+{{signature}}`
+    }
+  ];
+
+  /* =========================================================================
+     FIELD DEFINITIONS — all possible inputs, keyed by the name used in
+     templates' `fields` array.
+     ========================================================================= */
+  const FIELD_DEFS = {
+    customerName:  { label: "Customer's name", type: 'text',  placeholder: 'e.g. John Smith' },
+    date:          { label: "Date",            type: 'date' },
+    time:          { label: "Time",            type: 'time' },
+    location:      { label: "Location",        type: 'location' },
+    service:       { label: "Service",         type: 'service-select' },
+    amount:        { label: "Amount",          type: 'money', placeholder: '0.00' },
+    customerPhone: { label: "Customer phone",  type: 'tel',   placeholder: '07…', hint: 'Needed for SMS' },
+    customerEmail: { label: "Customer email",  type: 'email', placeholder: 'name@example.com', hint: 'Needed for email' },
+    signature:     { label: "Sign-off",         type: 'textarea', rows: 3, hint: 'Defaults from Settings — edit for this message only' }
+  };
+
+  /* Grouped service options — used by the service-select field */
+  const SERVICE_OPTIONS = [
+    { group: 'Car', items: [
+      'Essential Fresh',
+      'Showroom Detail',
+      'Premium Protect',
+      'Ultimate Shield',
+      'Soft Top Clean & Protect',
+      'Top Up Detail',
+    ]},
+    { group: 'Motorbike', items: [
+      'Bike Refresh',
+      'Bike Detail & Protect',
+      'Bike Showcase Protect',
+    ]},
+  ];
+  // Flat list for quick membership checks
+  const SERVICE_ITEMS_FLAT = SERVICE_OPTIONS.flatMap(g => g.items);
+
+  // Always include phone/email fields if the corresponding send button is usable
+  const SEND_FIELDS = {
+    sms:   'customerPhone',
+    email: 'customerEmail'
+  };
+
+  /* =========================================================================
+     SETTINGS — business info, saved to localStorage
+     ========================================================================= */
+  const SETTINGS_DEFS = [
+    { key: 'businessName',    label: 'Business name',            placeholder: 'TidyRide', full: false },
+    { key: 'businessPhone',   label: 'Business phone',           placeholder: '07…',       full: false },
+    { key: 'businessEmail',   label: 'Business email',           placeholder: 'you@…',     full: false },
+    { key: 'businessAddress', label: 'Business address',         placeholder: 'Street, Newton Abbot, Devon', full: true, textarea: true },
+    { key: 'reviewLink',      label: 'Google review link',       placeholder: 'https://g.page/r/…/review',   full: true },
+    { key: 'signature',       label: 'Default signature / sign-off', placeholder: 'Kindest regards\n\nSimon - TidyRide Detailing', full: true, textarea: true }
+  ];
+  const SETTINGS_DEFAULTS = {
+    businessName:    'TidyRide Detailing',
+    businessPhone:   '07396 366584',
+    businessEmail:   'info@tidyride.co.uk',
+    businessAddress: 'TidyRide Studio\nMilber Service Station\nShaldon Road\nTQ12 4AU',
+    reviewLink:      'https://g.page/tidyride/review',
+    signature:       'Kindest regards\n\nSimon - TidyRide Detailing'
+  };
+  const SETTINGS_KEY = 'tidyride.reminders.settings.v1';
+  const THEME_KEY    = 'tidyride.reminders.theme.v1';
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return { ...SETTINGS_DEFAULTS };
+      return { ...SETTINGS_DEFAULTS, ...JSON.parse(raw) };
+    } catch (e) {
+      return { ...SETTINGS_DEFAULTS };
+    }
+  }
+  function saveSettings(s) {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {}
+  }
+
+  /* =========================================================================
+     STATE
+     ========================================================================= */
+  const state = {
+    templateId: null,
+    manualEdit: false,
+    autoExpand: true,
+    form: {
+      customerName: '',
+      date: '',
+      time: '',
+      locationUseBusiness: true,
+      locationCustom: '',
+      service: '',
+      amount: '',
+      customerPhone: '',
+      customerEmail: '',
+      signature: ''         // initialized from settings at bootstrap
+    },
+    settings: loadSettings()
+  };
+  // Prefill signature from settings so the form and preview reflect it immediately
+  state.form.signature = state.settings.signature || '';
+
+  /* =========================================================================
+     THEME
+     ========================================================================= */
+  function applyTheme(mode) {
+    // mode: 'light' | 'dark' | 'system'
+    const effective = mode === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : mode;
+    document.documentElement.setAttribute('data-theme', effective);
+  }
+  function getStoredTheme() {
+    try { return localStorage.getItem(THEME_KEY) || 'system'; } catch (e) { return 'system'; }
+  }
+  function setStoredTheme(mode) {
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+  }
+
+  // Initial theme
+  applyTheme(getStoredTheme());
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getStoredTheme() === 'system') applyTheme('system');
+  });
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    // Cycle: system -> light -> dark -> system
+    const order = ['system', 'light', 'dark'];
+    const current = getStoredTheme();
+    const next = order[(order.indexOf(current) + 1) % order.length];
+    setStoredTheme(next);
+    applyTheme(next);
+    showToast(`Theme: ${next}`);
+  });
+
+  /* =========================================================================
+     FORMATTERS
+     ========================================================================= */
+  function formatDate(iso) {
+    if (!iso) return '';
+    // iso like "2026-04-18" -> "Sat 18 Apr 2026" (no comma)
+    const [y, m, d] = iso.split('-').map(Number);
+    if (!y || !m || !d) return iso;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    const wk = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getUTCDay()];
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1];
+    return `${wk} ${d} ${mo} ${y}`;
+  }
+  function todayISO(offsetDays = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function smsStats(text) {
+    const len = text.length;
+    // GSM-7 covers basic ASCII; non-ASCII triggers Unicode (UCS-2) limits.
+    const isAscii = /^[\x00-\x7F]*$/.test(text);
+    const singleLimit = isAscii ? 160 : 70;
+    const partLimit   = isAscii ? 153 : 67;
+    const parts = len === 0 ? 0 : (len <= singleLimit ? 1 : Math.ceil(len / partLimit));
+    return { len, parts, isAscii, singleLimit };
+  }
+  function formatTime(t) {
+    if (!t) return '';
+    // t like "14:30"
+    const [hStr, mStr] = t.split(':');
+    let h = parseInt(hStr, 10); const m = parseInt(mStr, 10);
+    if (isNaN(h) || isNaN(m)) return t;
+    const period = h >= 12 ? 'pm' : 'am';
+    h = h % 12; if (h === 0) h = 12;
+    return m === 0 ? `${h}${period}` : `${h}:${String(m).padStart(2,'0')}${period}`;
+  }
+  function formatAmount(raw) {
+    if (raw === '' || raw == null) return '';
+    const n = Number(String(raw).replace(/[^0-9.]/g, ''));
+    if (isNaN(n)) return '';
+    // £45 if whole, £45.50 otherwise
+    return Number.isInteger(n) ? `£${n}` : `£${n.toFixed(2)}`;
+  }
+
+  /* =========================================================================
+     TEMPLATE RENDERING
+     ========================================================================= */
+  function getTemplate() {
+    return TEMPLATES.find(t => t.id === state.templateId) || null;
+  }
+  function activeFields(tpl) {
+    if (!tpl) return [];
+    const set = new Set(tpl.fields);
+    // Auto-included on every template:
+    set.add('customerPhone');   // for SMS send button
+    set.add('customerEmail');   // for Email send button
+    set.add('signature');       // sign-off, prefilled from Settings
+    return Array.from(set);
+  }
+
+  function placeholderValues() {
+    const s = state.settings;
+    const f = state.form;
+    const locationValue = f.locationUseBusiness
+      ? (s.businessAddress || '')
+      : f.locationCustom;
+
+    return {
+      customerName:  f.customerName,
+      date:          formatDate(f.date),
+      time:          formatTime(f.time),
+      location:      locationValue,
+      service:       f.service,
+      amount:        formatAmount(f.amount),
+      businessName:  s.businessName || 'TidyRide',
+      businessPhone: s.businessPhone,
+      businessEmail: s.businessEmail,
+      reviewLink:    s.reviewLink,
+      signature:     f.signature || s.signature
+    };
+  }
+
+  function fillTemplate(body, values, opts = {}) {
+    // Returns { text, html, missing: [keys] }
+    const missing = new Set();
+    const replacer = (raw, key) => {
+      const v = values[key];
+      if (v == null || v === '') {
+        missing.add(key);
+        return opts.html
+          ? `<span class="missing">{{${key}}}</span>`
+          : `{{${key}}}`;
+      }
+      return opts.html ? escapeHtml(v) : v;
+    };
+    const source = opts.html ? escapeHtml(body) : body;
+    // After escaping, {{ }} is still literal — replace on escaped string for html
+    const output = source.replace(/\{\{(\w+)\}\}/g, replacer);
+    return { text: output, missing: Array.from(missing) };
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /* =========================================================================
+     RENDER: template picker
+     ========================================================================= */
+  function renderTemplates() {
+    const host = document.getElementById('templatePicker');
+    host.innerHTML = '';
+    TEMPLATES.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'template-card' + (state.templateId === t.id ? ' selected' : '');
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', state.templateId === t.id ? 'true' : 'false');
+      b.innerHTML = `
+        <div class="name">${escapeHtml(t.name)}</div>
+        <div class="desc">${escapeHtml(t.description || '')}</div>
+      `;
+      b.addEventListener('click', () => {
+        state.templateId = t.id;
+        state.manualEdit = false;
+        renderAll();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  /* =========================================================================
+     RENDER: form
+     ========================================================================= */
+  function renderForm() {
+    const host = document.getElementById('formPanel');
+    host.innerHTML = '';
+
+    const tpl = getTemplate();
+    if (!tpl) {
+      host.innerHTML = '<div class="empty">Pick a template above to see the fields you need.</div>';
+      return;
+    }
+
+    const fields = activeFields(tpl);
+    const wrap = document.createElement('div');
+    wrap.className = 'fields two-col';
+    host.appendChild(wrap);
+
+    fields.forEach(name => {
+      const def = FIELD_DEFS[name];
+      if (!def) return;
+      const node = buildField(name, def);
+      wrap.appendChild(node);
+    });
+  }
+
+  function buildField(name, def) {
+    const wrap = document.createElement('div');
+    const isFull = def.type === 'location'
+                || def.type === 'textarea'
+                || def.type === 'service-select';
+    wrap.className = 'field' + (isFull ? ' full' : '');
+
+    const id = `f_${name}`;
+    if (def.type === 'location') {
+      // Checkbox row
+      const cb = document.createElement('div');
+      cb.className = 'checkbox-row';
+      const checked = state.form.locationUseBusiness ? 'checked' : '';
+      const bizAddrOneLine = (state.settings.businessAddress || '').replace(/\s*\n+\s*/g, ', ').trim();
+      const bizAddrDisplay = bizAddrOneLine || 'not set — open Settings';
+      cb.innerHTML = `
+        <input type="checkbox" id="${id}_ub" ${checked}>
+        <label for="${id}_ub">Use business address <span class="muted">(${escapeHtml(bizAddrDisplay)})</span></label>
+      `;
+      wrap.appendChild(cb);
+
+      const inner = document.createElement('div');
+      inner.innerHTML = `
+        <label for="${id}">Customer address</label>
+        <input class="input" id="${id}" type="text" placeholder="Street, town, postcode"
+               value="${escapeHtml(state.form.locationCustom)}"
+               ${state.form.locationUseBusiness ? 'disabled' : ''}>
+      `;
+      wrap.appendChild(inner);
+
+      cb.querySelector('input').addEventListener('change', e => {
+        state.form.locationUseBusiness = e.target.checked;
+        renderForm();
+        renderPreview();
+      });
+      wrap.querySelector(`#${id}`).addEventListener('input', e => {
+        state.form.locationCustom = e.target.value;
+        renderPreview();
+      });
+      return wrap;
+    }
+
+    // Label
+    const label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.textContent = def.label;
+    wrap.appendChild(label);
+
+    if (def.type === 'money') {
+      const ip = document.createElement('div');
+      ip.className = 'input-prefix';
+      ip.innerHTML = `
+        <span class="prefix">£</span>
+        <input class="input" id="${id}" type="number" inputmode="decimal" min="0" step="0.01"
+               placeholder="${escapeHtml(def.placeholder || '')}"
+               value="${escapeHtml(state.form[name] || '')}">
+      `;
+      wrap.appendChild(ip);
+      ip.querySelector('input').addEventListener('input', e => {
+        state.form[name] = e.target.value;
+        renderPreview();
+      });
+    } else if (def.type === 'service-select') {
+      // Grouped dropdown + optional custom text input
+      const currentVal = state.form.service || '';
+      const isCustom   = currentVal !== '' && !SERVICE_ITEMS_FLAT.includes(currentVal);
+
+      const sel = document.createElement('select');
+      sel.className = 'input';
+      sel.id = id;
+
+      // Placeholder option
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select a service…';
+      sel.appendChild(placeholder);
+
+      // Optgroups
+      SERVICE_OPTIONS.forEach(grp => {
+        const og = document.createElement('optgroup');
+        og.label = grp.group;
+        grp.items.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item;
+          opt.textContent = item;
+          og.appendChild(opt);
+        });
+        sel.appendChild(og);
+      });
+
+      // "Other" option
+      const otherOpt = document.createElement('option');
+      otherOpt.value = '__other__';
+      otherOpt.textContent = 'Other (type below)…';
+      sel.appendChild(otherOpt);
+
+      sel.value = isCustom ? '__other__' : currentVal;
+
+      // Custom text input (shown only when Other is selected)
+      const customInput = document.createElement('input');
+      customInput.className = 'input';
+      customInput.type = 'text';
+      customInput.placeholder = 'Describe the service…';
+      customInput.style.marginTop = '8px';
+      customInput.style.display = isCustom ? 'block' : 'none';
+      customInput.value = isCustom ? currentVal : '';
+
+      sel.addEventListener('change', () => {
+        if (sel.value === '__other__') {
+          customInput.style.display = 'block';
+          customInput.focus();
+          state.form.service = customInput.value;
+        } else {
+          customInput.style.display = 'none';
+          state.form.service = sel.value;
+        }
+        renderPreview();
+      });
+      customInput.addEventListener('input', () => {
+        state.form.service = customInput.value;
+        renderPreview();
+      });
+
+      wrap.appendChild(sel);
+      wrap.appendChild(customInput);
+
+    } else if (def.type === 'textarea') {
+      const ta = document.createElement('textarea');
+      ta.className = 'textarea';
+      ta.id = id;
+      ta.rows = def.rows || 3;
+      if (def.placeholder) ta.placeholder = def.placeholder;
+      ta.value = state.form[name] || '';
+      ta.addEventListener('input', e => {
+        state.form[name] = e.target.value;
+        renderPreview();
+      });
+      wrap.appendChild(ta);
+    } else {
+      const input = document.createElement('input');
+      input.className = 'input';
+      input.id = id;
+      input.type = def.type;
+      if (def.placeholder) input.placeholder = def.placeholder;
+      input.value = state.form[name] || '';
+      input.addEventListener('input', e => {
+        state.form[name] = e.target.value;
+        renderPreview();
+      });
+      wrap.appendChild(input);
+
+      // Quick-pick buttons for date fields
+      if (def.type === 'date') {
+        const quick = document.createElement('div');
+        quick.className = 'quick-dates';
+        [
+          { label: 'Today',     offset: 0 },
+          { label: 'Tomorrow',  offset: 1 },
+          { label: 'In 2 days', offset: 2 }
+        ].forEach(opt => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = opt.label;
+          b.addEventListener('click', () => {
+            const iso = todayISO(opt.offset);
+            state.form[name] = iso;
+            input.value = iso;
+            renderPreview();
+          });
+          quick.appendChild(b);
+        });
+        wrap.appendChild(quick);
+      }
+    }
+
+    if (def.hint) {
+      const h = document.createElement('div');
+      h.className = 'hint';
+      h.textContent = def.hint;
+      wrap.appendChild(h);
+    }
+    return wrap;
+  }
+
+  /* =========================================================================
+     RENDER: preview
+     ========================================================================= */
+  function applyAutoExpand(el) {
+    if (state.autoExpand) {
+      el.style.resize   = 'none';
+      el.style.overflow = 'hidden';
+      el.style.height   = 'auto';
+      el.style.height   = el.scrollHeight + 'px';
+    } else {
+      el.style.resize   = 'vertical';
+      el.style.overflow = 'auto';
+      el.style.height   = '';
+    }
+  }
+
+  function updateSmsCounter() {
+    const preview = document.getElementById('preview');
+    const counter = document.getElementById('smsCounter');
+    const text = preview.value || '';
+    const stats = smsStats(text);
+    const encoding = stats.isAscii ? '' : ' (contains special characters — uses Unicode SMS)';
+    const partsLabel = stats.parts <= 1
+      ? 'fits in 1 SMS'
+      : `will send as ${stats.parts} SMS parts`;
+    counter.textContent = `${stats.len} characters — ${partsLabel}${encoding}`;
+    counter.classList.toggle('warn', stats.parts === 2);
+    counter.classList.toggle('over', stats.parts >= 3);
+  }
+
+  function renderPreview() {
+    const tpl = getTemplate();
+    const preview      = document.getElementById('preview');
+    const actions      = document.getElementById('previewActions');
+    const counter      = document.getElementById('smsCounter');
+    const reset        = document.getElementById('resetBtn');
+    const resetDraft   = document.getElementById('resetDraftBtn');
+    if (!tpl) {
+      preview.value  = 'Pick a template above to start.';
+      preview.disabled = true;
+      preview.style.height = '';
+      preview.style.overflow = '';
+      preview.style.resize = '';
+      actions.hidden = true;
+      counter.hidden = true;
+      reset.hidden   = true;
+      resetDraft.hidden = true;
+      document.getElementById('autoExpandRow').hidden = true;
+      return;
+    }
+    const plainResult = fillTemplate(tpl.body, placeholderValues(), { html: false });
+    // Only overwrite the textarea if the user hasn't manually edited it
+    if (!state.manualEdit) {
+      preview.value = plainResult.text;
+    }
+    preview.disabled = false;
+    actions.hidden = false;
+    reset.hidden   = false;
+    resetDraft.hidden = !state.manualEdit;
+
+    // Keep checkbox in sync with state
+    const autoExpandRow    = document.getElementById('autoExpandRow');
+    const autoExpandToggle = document.getElementById('autoExpandToggle');
+    autoExpandRow.hidden           = false;
+    autoExpandToggle.checked       = state.autoExpand;
+
+    applyAutoExpand(preview);
+    updateSmsCounter();
+    counter.hidden = false;
+  }
+
+  /* =========================================================================
+     ACTIONS: copy / sms / email
+     ========================================================================= */
+  function plainFilled() {
+    const preview = document.getElementById('preview');
+    return preview ? preview.value : '';
+  }
+
+  async function copyToClipboard() {
+    const text = plainFilled();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard');
+    } catch (e) {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast('Copied to clipboard'); }
+      catch (_) { showToast('Copy failed — select and copy manually'); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  function openSms() {
+    const text = plainFilled();
+    if (!text) return;
+    const phone = state.form.customerPhone.replace(/\s+/g, '');
+    if (!phone) { showToast('Enter the customer phone first'); return; }
+    // sms: URI — body param works on iOS/Android Messages; separator differs per platform
+    // Most reliable across platforms:
+    const ua = navigator.userAgent || '';
+    const sep = /iPhone|iPad|Macintosh/i.test(ua) ? '&' : '?';
+    const url = `sms:${phone}${sep}body=${encodeURIComponent(text)}`;
+    window.location.href = url;
+  }
+
+  function openEmail() {
+    const text = plainFilled();
+    if (!text) return;
+    const to = state.form.customerEmail.trim();
+    if (!to) { showToast('Enter the customer email first'); return; }
+    const tpl = getTemplate();
+    const subject = tpl ? `${state.settings.businessName || 'TidyRide'} — ${tpl.name}` : 'Message';
+    const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+    window.location.href = url;
+  }
+
+  // Normalise a UK phone number to international form for wa.me (no + or spaces).
+  // "07396 366584" -> "447396366584". Numbers already in +44 / 00 44 form are
+  // handled too. Non-UK international (e.g. "+33…") passes through unchanged.
+  function normaliseUkPhone(raw) {
+    let p = String(raw || '').replace(/[\s\-()]/g, '');
+    if (!p) return '';
+    if (p.startsWith('+')) return p.slice(1);
+    if (p.startsWith('00')) return p.slice(2);
+    if (p.startsWith('0'))  return '44' + p.slice(1);
+    return p;
+  }
+
+  function openWhatsApp() {
+    const text = plainFilled();
+    if (!text) return;
+    const phone = normaliseUkPhone(state.form.customerPhone);
+    if (!phone) { showToast('Enter the customer phone first'); return; }
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  function resetForm() {
+    // Keep templateId; reset everything else to defaults.
+    state.manualEdit = false;
+    state.form.customerName = '';
+    state.form.date = '';
+    state.form.time = '';
+    state.form.locationUseBusiness = true;
+    state.form.locationCustom = '';
+    state.form.service = '';
+    state.form.amount = '';
+    state.form.customerPhone = '';
+    state.form.customerEmail = '';
+    state.form.signature = state.settings.signature || '';
+    renderForm();
+    renderPreview();
+    showToast('Form cleared — ready for the next customer');
+  }
+
+  document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+  document.getElementById('smsBtn').addEventListener('click', openSms);
+  document.getElementById('whatsappBtn').addEventListener('click', openWhatsApp);
+  document.getElementById('emailBtn').addEventListener('click', openEmail);
+  document.getElementById('resetBtn').addEventListener('click', resetForm);
+
+  // Preview is directly editable — track manual changes
+  document.getElementById('preview').addEventListener('input', () => {
+    if (!state.manualEdit) {
+      state.manualEdit = true;
+      document.getElementById('resetDraftBtn').hidden = false;
+    }
+    applyAutoExpand(document.getElementById('preview'));
+    updateSmsCounter();
+  });
+
+  document.getElementById('resetDraftBtn').addEventListener('click', () => {
+    state.manualEdit = false;
+    renderPreview();
+    showToast('Draft reset to template');
+  });
+
+  document.getElementById('autoExpandToggle').addEventListener('change', e => {
+    state.autoExpand = e.target.checked;
+    applyAutoExpand(document.getElementById('preview'));
+  });
+
+  /* =========================================================================
+     SETTINGS MODAL
+     ========================================================================= */
+  const modal = document.getElementById('settingsModal');
+  function openSettings() {
+    renderSettingsFields();
+    modal.classList.add('open');
+  }
+  function closeSettings() { modal.classList.remove('open'); }
+
+  document.getElementById('settingsBtn').addEventListener('click', openSettings);
+  document.getElementById('settingsClose').addEventListener('click', closeSettings);
+  document.getElementById('settingsCancel').addEventListener('click', closeSettings);
+  modal.addEventListener('click', e => { if (e.target === modal) closeSettings(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeSettings();
+  });
+
+  function renderSettingsFields() {
+    const host = document.getElementById('settingsFields');
+    host.innerHTML = '';
+    SETTINGS_DEFS.forEach(def => {
+      const wrap = document.createElement('div');
+      wrap.className = 'field' + (def.full ? ' full' : '');
+      const id = `s_${def.key}`;
+      const val = escapeHtml(state.settings[def.key] || '');
+      const ph = escapeHtml(def.placeholder || '');
+      if (def.textarea) {
+        wrap.innerHTML = `
+          <label for="${id}">${escapeHtml(def.label)}</label>
+          <textarea class="textarea" id="${id}" rows="2" placeholder="${ph}">${val}</textarea>
+        `;
+      } else {
+        wrap.innerHTML = `
+          <label for="${id}">${escapeHtml(def.label)}</label>
+          <input class="input" id="${id}" type="text" placeholder="${ph}" value="${val}">
+        `;
+      }
+      host.appendChild(wrap);
+    });
+  }
+
+  document.getElementById('settingsSave').addEventListener('click', () => {
+    const prevSignature = state.settings.signature;
+    SETTINGS_DEFS.forEach(def => {
+      const el = document.getElementById(`s_${def.key}`);
+      if (!el) return;
+      // Preserve internal newlines for textareas; trim only leading/trailing whitespace
+      state.settings[def.key] = def.textarea
+        ? el.value.replace(/^\s+|\s+$/g, '')
+        : el.value.trim();
+    });
+    // If the form's signature matches the OLD default (i.e. the user hasn't customised
+    // it for this message), update it to the new default too.
+    if (state.form.signature === prevSignature) {
+      state.form.signature = state.settings.signature;
+    }
+    saveSettings(state.settings);
+    closeSettings();
+    showToast('Settings saved');
+    renderAll();
+  });
+
+  /* =========================================================================
+     TOAST
+     ========================================================================= */
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  /* =========================================================================
+     CALENDAR DRAG-AND-DROP
+     ========================================================================= */
+
+  // Parse an ICS/VCALENDAR string and return a plain object of useful fields.
+  function parseICS(raw) {
+    // Unfold lines per RFC 5545 (CRLF + whitespace = continuation)
+    const text = raw
+      .replace(/\r\n[ \t]/g, '')
+      .replace(/\n[ \t]/g, '')
+      .replace(/\r\n/g, '\n');
+
+    const evMatch = text.match(/BEGIN:VEVENT([\s\S]*?)END:VEVENT/i);
+    if (!evMatch) return null;
+    const ev = evMatch[1];
+
+    // Get the raw value of a property (handles params like DTSTART;TZID=…:value)
+    function prop(name) {
+      const m = ev.match(new RegExp('(?:^|\\n)' + name + '(?:;[^:\\n]*)?:([^\\n]*)', 'i'));
+      return m ? m[1].trim() : '';
+    }
+    // Unescape ICS text encoding
+    function unescape(s) {
+      return s.replace(/\\n/gi, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+    }
+
+    const summary     = unescape(prop('SUMMARY'));
+    const description = unescape(prop('DESCRIPTION'));
+    const location    = unescape(prop('LOCATION'));
+    const dtstart     = prop('DTSTART');
+
+    // Date / time — handle 20260418T140000, 20260418T140000Z, 20260418 (all-day)
+    let date = '', time = '';
+    const digits = dtstart.replace(/[^0-9T]/g, '');
+    if (digits.length >= 8) {
+      date = digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6, 8);
+      if (digits.includes('T') && digits.length >= 13) {
+        const tp = digits.split('T')[1];
+        time = tp.slice(0, 2) + ':' + tp.slice(2, 4);
+      }
+    }
+
+    // UK phone regex — matches +447xxxxxxxxx, 07xxxxxxxxx, +44 77... etc.
+    const PHONE_RE = /(?:(?:\+44|0044)[\s\-]?\d[\d\s\-]{8,11}|0\d[\d\s\-]{8,11})/;
+
+    // Strip phone number from a string and return { text, phone }
+    function stripPhone(str) {
+      const m = str.match(PHONE_RE);
+      if (!m) return { text: str.trim(), phone: '' };
+      return {
+        text: str.replace(m[0], '').replace(/\s{2,}/g, ' ').trim(),
+        phone: m[0].replace(/\s+/g, ' ').trim()
+      };
+    }
+
+    let customerName = '', service = '', phone = '';
+
+    // -- Pattern 1: "[Qty x] Service for Name [+phone]"
+    //    e.g. "TOP UP DETAIL for Nikki Hurst +447778733053"
+    //         "2 x INTERIOR DETAILs for Moira Armstrong +447..."
+    //         "Essential Fresh for Tafline Percy +44770104280"
+    const forM = summary.match(/^(.+?)\s+for\s+([A-Z][^+\d\n]+?)(\s+[\+0][\d\s]{9,})?$/i);
+    if (forM) {
+      service = forM[1].trim().replace(/^\d+\s*x\s+/i, '');   // strip "2 x" prefix
+      customerName = forM[2].trim();
+      phone = forM[3] ? forM[3].trim() : '';
+    }
+
+    // -- Pattern 2: "Name - Location/Service"
+    //    e.g. "Daniel Piercey - Plumley"
+    if (!customerName) {
+      const dashM = summary.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+      if (dashM) {
+        customerName = dashM[1].trim();
+        service = dashM[2].trim();   // may be location — user can correct in modal
+      }
+    }
+
+    // -- Pattern 3: Leading capitalised name words then service/vehicle tail
+    //    e.g. "Angela Norwood Merc top up", "Fred SLK Top Up", "Mrs Elizabeth Bretherton inside and out"
+    if (!customerName) {
+      // Strip any trailing phone from summary first
+      const stripped = stripPhone(summary);
+      if (stripped.phone) phone = stripped.phone;
+      const cleaned = stripped.text;
+
+      // Match leading name: optional title (Mr/Mrs/Ms/Dr) + 1-3 capitalized words
+      const nameM = cleaned.match(/^((?:Mrs?|Ms|Dr|Miss)\.?\s+)?([A-Z][a-z]+(?:\s+(?:&\s+)?[A-Z][a-z]+){0,3})\b(.*)/);
+      if (nameM) {
+        const title = nameM[1] || '';
+        customerName = (title + nameM[2]).trim();
+        service = nameM[3].trim();
+      } else {
+        customerName = cleaned;
+      }
+    }
+
+    // Phone: check title first (very common in Simon's events), then description
+    if (!phone) {
+      const fromTitle = stripPhone(summary);
+      if (fromTitle.phone) phone = fromTitle.phone;
+    }
+    if (!phone) {
+      const fromDesc = description.match(PHONE_RE);
+      if (fromDesc) phone = fromDesc[0].replace(/\s+/g, ' ').trim();
+    }
+
+    // Clean any stray phone from customerName / service in case it ended up there
+    customerName = customerName.replace(PHONE_RE, '').replace(/\s{2,}/g, ' ').trim();
+    service      = service.replace(PHONE_RE, '').replace(/\s{2,}/g, ' ').trim();
+
+    // Extract email from description
+    let email = '';
+    const emailM = description.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+    if (emailM) email = emailM[0];
+
+    return { rawTitle: summary, customerName, service, date, time, phone, email, location };
+  }
+
+  // Read ICS content from a drop event — tries text/calendar first, then files.
+  async function getICSFromDrop(dt) {
+    try {
+      const txt = dt.getData('text/calendar');
+      if (txt && txt.includes('VCALENDAR')) return txt;
+    } catch (_) {}
+    for (const file of Array.from(dt.files || [])) {
+      if (file.name.endsWith('.ics') ||
+          file.type === 'text/calendar' ||
+          file.type === 'text/x-vcalendar') {
+        try { return await file.text(); } catch (_) {}
+      }
+    }
+    return null;
+  }
+
+  function isCalendarDrag(dt) {
+    if (!dt || !dt.types) return false;
+    const types = Array.from(dt.types);
+    return types.includes('text/calendar') || types.includes('Files') || types.includes('files');
+  }
+
+  // Drag counter prevents flicker when cursor crosses child elements
+  let _dragCount = 0;
+  const dropOverlay = document.getElementById('dropOverlay');
+
+  document.addEventListener('dragenter', e => {
+    if (!isCalendarDrag(e.dataTransfer)) return;
+    _dragCount++;
+    dropOverlay.classList.add('active');
+  });
+  document.addEventListener('dragleave', e => {
+    if (_dragCount <= 0) return;
+    _dragCount--;
+    if (_dragCount === 0) dropOverlay.classList.remove('active');
+  });
+  document.addEventListener('dragover', e => {
+    if (_dragCount > 0) e.preventDefault(); // allow drop
+  });
+  document.addEventListener('drop', async e => {
+    _dragCount = 0;
+    dropOverlay.classList.remove('active');
+    const ics = await getICSFromDrop(e.dataTransfer);
+    if (!ics) return;
+    e.preventDefault();
+    const parsed = parseICS(ics);
+    if (parsed) openCalendarModal(parsed);
+    else showToast('Couldn\'t read that event — try again');
+  });
+
+  /* ---- Calendar confirmation modal ---- */
+  const calModal = document.getElementById('calendarModal');
+  let _calParsed = null;
+
+  function openCalendarModal(parsed) {
+    _calParsed = parsed;
+    const host = document.getElementById('calendarModalFields');
+    host.innerHTML = '';
+
+    // Show the raw event title so Simon can see what was parsed from
+    if (parsed.rawTitle) {
+      const banner = document.createElement('div');
+      banner.className = 'field full';
+      banner.style.cssText = 'background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;';
+      banner.innerHTML = `<span style="color:var(--text-muted);font-weight:500;">Event title: </span><span style="color:var(--text);">${escapeHtml(parsed.rawTitle)}</span>`;
+      host.appendChild(banner);
+    }
+
+    const fieldDefs = [
+      { key: 'customerName', label: 'Customer name',  type: 'text',  placeholder: '' },
+      { key: 'service',      label: 'Service',        type: 'service-select' },
+      { key: 'date',         label: 'Date',           type: 'date',  placeholder: '' },
+      { key: 'time',         label: 'Time',           type: 'time',  placeholder: '' },
+      { key: 'phone',        label: 'Phone',          type: 'tel',   placeholder: '07…' },
+      { key: 'email',        label: 'Email',          type: 'email', placeholder: 'name@example.com' },
+    ];
+    fieldDefs.forEach(f => {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const id = 'cm_' + f.key;
+      const val = parsed[f.key] || '';
+      const notFound = val === '';
+
+      if (f.type === 'service-select') {
+        const isCustom = val !== '' && !SERVICE_ITEMS_FLAT.includes(val);
+        let html = `<label for="${id}">Service${notFound ? ' <span class="muted" style="font-weight:400;font-size:12px;">(not found)</span>' : ''}</label>`;
+        html += `<select class="input" id="${id}">`;
+        html += `<option value="">Select a service…</option>`;
+        SERVICE_OPTIONS.forEach(grp => {
+          html += `<optgroup label="${escapeHtml(grp.group)}">`;
+          grp.items.forEach(item => {
+            const sel = (!isCustom && item === val) ? ' selected' : '';
+            html += `<option value="${escapeHtml(item)}"${sel}>${escapeHtml(item)}</option>`;
+          });
+          html += `</optgroup>`;
+        });
+        html += `<option value="__other__"${isCustom ? ' selected' : ''}>Other (type below)…</option>`;
+        html += `</select>`;
+        html += `<input class="input" id="${id}_custom" type="text" placeholder="Describe the service…"
+                        style="margin-top:8px;display:${isCustom ? 'block' : 'none'};"
+                        value="${escapeHtml(isCustom ? val : '')}">`;
+        wrap.innerHTML = html;
+        wrap.querySelector(`#${id}`).addEventListener('change', e => {
+          wrap.querySelector(`#${id}_custom`).style.display = e.target.value === '__other__' ? 'block' : 'none';
+        });
+      } else {
+        const notFoundLabel = notFound ? ' <span class="muted" style="font-weight:400;font-size:12px;">(not found)</span>' : '';
+        wrap.innerHTML = `
+          <label for="${id}">${escapeHtml(f.label)}${notFoundLabel}</label>
+          <input class="input" id="${id}" type="${f.type}" placeholder="${escapeHtml(f.placeholder || '')}" value="${escapeHtml(val)}">
+        `;
+      }
+      host.appendChild(wrap);
+    });
+    calModal.classList.add('open');
+  }
+
+  function closeCalendarModal() { calModal.classList.remove('open'); }
+
+  document.getElementById('calendarModalClose').addEventListener('click', closeCalendarModal);
+  document.getElementById('calendarModalCancel').addEventListener('click', closeCalendarModal);
+  calModal.addEventListener('click', e => { if (e.target === calModal) closeCalendarModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && calModal.classList.contains('open')) closeCalendarModal();
+  });
+
+  document.getElementById('calendarModalFill').addEventListener('click', () => {
+    // Read whatever is currently in the modal fields (user may have edited them)
+    const read = key => (document.getElementById('cm_' + key) || {}).value || '';
+    const name    = read('customerName');
+    // Service: if "Other" is selected, read the custom input
+    const selEl   = document.getElementById('cm_service');
+    const service = (selEl && selEl.value === '__other__')
+      ? (document.getElementById('cm_service_custom') || {}).value || ''
+      : read('service');
+    const date    = read('date');
+    const time    = read('time');
+    const phone   = read('phone');
+    const email   = read('email');
+
+    // Apply to form state
+    if (name)    state.form.customerName  = name;
+    if (service) state.form.service       = service;
+    if (date)    state.form.date          = date;
+    if (time)    state.form.time          = time;
+    if (phone)   state.form.customerPhone = phone;
+    if (email)   state.form.customerEmail = email;
+
+    state.manualEdit = false;
+    closeCalendarModal();
+    renderAll();
+    showToast('Form filled from calendar event');
+  });
+
+  /* =========================================================================
+     BOOTSTRAP
+     ========================================================================= */
+  function renderAll() {
+    renderTemplates();
+    renderForm();
+    renderPreview();
+  }
+  renderAll();
+
+  // Hint on first load if business address is missing
+  if (!state.settings.businessAddress) {
+    setTimeout(() => showToast('Tip: set your business address in Settings'), 600);
+  }
+
+  // ── PWA: register service worker for offline support ──────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {
+        // SW registration failed silently — app still works online
+      });
+    });
+  }
+  </script>
+</body>
+</html>
