@@ -831,9 +831,7 @@
             <button class="btn ghost" id="resetBtn" hidden title="Clear all form fields and start a new customer">New customer</button>
           </div>
         </div>
-        <textarea class="preview" id="preview" spellcheck="true" aria-label="Message preview — editable" disabled style="display:none;">Pick a template above to start.</textarea>
-        <div class="preview-rendered" id="previewRendered">Pick a template above to start.</div>
-        <button class="preview-edit-toggle" id="previewEditToggle" hidden>✏️ Edit message manually</button>
+        <textarea class="preview" id="preview" spellcheck="true" aria-label="Message preview — editable" disabled>Pick a template above to start.</textarea>
         <div id="autoExpandRow" hidden style="margin-top:8px;">
           <label class="checkbox-row" style="font-size:13px;color:var(--text-muted);cursor:pointer;">
             <input type="checkbox" id="autoExpandToggle" checked>
@@ -1858,27 +1856,20 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   function renderPreview() {
     const tpl        = getTemplate();
     const preview    = document.getElementById('preview');
-    const rendered   = document.getElementById('previewRendered');
     const actions    = document.getElementById('previewActions');
     const counter    = document.getElementById('smsCounter');
     const reset      = document.getElementById('resetBtn');
     const resetDraft = document.getElementById('resetDraftBtn');
     const missingBar = document.getElementById('missingFieldsBar');
     const missingTxt = document.getElementById('missingFieldsText');
-    const editToggle = document.getElementById('previewEditToggle');
-
     if (!tpl) {
       preview.value    = 'Pick a template above to start.';
       preview.disabled = true;
-      preview.style.display = 'none';
-      rendered.innerHTML = 'Pick a template above to start.';
-      rendered.className = 'preview-rendered';
       actions.hidden   = true;
       counter.hidden   = true;
       reset.hidden     = true;
       resetDraft.hidden = true;
       missingBar.classList.remove('show');
-      editToggle.hidden = true;
       document.getElementById('autoExpandRow').hidden = true;
       return;
     }
@@ -1887,20 +1878,11 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     const plainResult = fillTemplate(tpl.body, values, { html: false });
     const htmlResult  = fillTemplate(tpl.body, values, { html: true  });
 
-    // Update textarea (for manual editing)
     if (!state.manualEdit) {
       preview.value = plainResult.text;
     }
 
-    // Update rendered div with highlighted missing placeholders
     const hasMissing = htmlResult.missing.length > 0;
-    // Build coloured HTML: wrap {{x}} in red span
-    const colouredHtml = (state.manualEdit ? escapeHtml(preview.value) : htmlResult.text)
-      .replace(/\{\{(\w+)\}\}/g, (_, k) =>
-        `<span class="placeholder-missing">{{${k}}}</span>`
-      );
-    rendered.innerHTML = colouredHtml;
-    rendered.className = 'preview-rendered' + (hasMissing ? ' has-missing' : '');
 
     // Missing fields bar
     if (hasMissing) {
@@ -1928,18 +1910,13 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     actions.hidden    = false;
     reset.hidden      = false;
     resetDraft.hidden = !state.manualEdit;
-    editToggle.hidden = false;
-    editToggle.textContent = state.manualEdit ? '↺ Back to auto preview' : '✏️ Edit message manually';
-
-    // Show/hide textarea
-    preview.style.display = state.manualEdit ? 'block' : 'none';
 
     const autoExpandRow    = document.getElementById('autoExpandRow');
     const autoExpandToggle = document.getElementById('autoExpandToggle');
-    autoExpandRow.hidden         = !state.manualEdit;
+    autoExpandRow.hidden         = false;
     autoExpandToggle.checked     = state.autoExpand;
 
-    if (state.manualEdit) applyAutoExpand(preview);
+    applyAutoExpand(preview);
     counter.hidden = true;
   }
 
@@ -2073,20 +2050,6 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       e.preventDefault();
       copyToClipboard();
     }
-  });
-
-  // Preview edit toggle
-  document.getElementById('previewEditToggle').addEventListener('click', () => {
-    state.manualEdit = !state.manualEdit;
-    if (!state.manualEdit) {
-      // Reset to auto on toggle back
-      const tpl = getTemplate();
-      if (tpl) {
-        const plain = fillTemplate(tpl.body, placeholderValues(), { html: false });
-        document.getElementById('preview').value = plain.text;
-      }
-    }
-    renderPreview();
   });
 
   // Preview is directly editable — track manual changes
