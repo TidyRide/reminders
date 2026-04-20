@@ -13,81 +13,106 @@
   <meta name="apple-mobile-web-app-title" content="TR Reminders">
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
-    /* ---------- Theme tokens ---------- */
+    /* ── Apple Design System tokens ───────────────────────────────────────── */
     :root {
-      --bg:            #f5f7fa;
-      --surface:       #ffffff;
-      --surface-2:     #f0f3f7;
-      --surface-hover: #e9edf2;
-      --border:        #d7dde5;
-      --border-strong: #b8c0cc;
-      --text:          #16202b;
-      --text-muted:    #5a6573;
-      --text-soft:     #7a8494;
-      --accent:        #2f6bed;
-      --accent-hover:  #2558d0;
-      --accent-text:   #ffffff;
-      --success:       #138a43;
-      --danger:        #c93030;
-      --ring:          rgba(47,107,237,0.35);
-      --shadow-sm:     0 1px 2px rgba(16,24,40,0.06), 0 1px 3px rgba(16,24,40,0.05);
-      --shadow-md:     0 4px 12px rgba(16,24,40,0.08), 0 2px 4px rgba(16,24,40,0.05);
-      --radius:        10px;
-      --radius-sm:     6px;
+      /* Backgrounds */
+      --bg:            #F2F2F7;
+      --surface:       #FFFFFF;
+      --surface-2:     #F2F2F7;
+      --surface-hover: rgba(120,120,128,0.12);
+
+      /* Separators */
+      --border:        rgba(60,60,67,0.18);
+      --border-strong: rgba(60,60,67,0.29);
+
+      /* Labels */
+      --text:          #000000;
+      --text-muted:    rgba(60,60,67,0.6);
+      --text-soft:     rgba(60,60,67,0.3);
+
+      /* Accent — iOS Blue */
+      --accent:        #007AFF;
+      --accent-hover:  #0066D6;
+      --accent-text:   #FFFFFF;
+      --accent-tint:   rgba(0,122,255,0.10);
+
+      /* System colours */
+      --success:       #34C759;
+      --danger:        #FF3B30;
+      --warning-text:  #B25000;
+      --warning-bg:    rgba(255,149,0,0.12);
+      --warning-bg-dk: rgba(255,149,0,0.22);
+
+      /* Focus ring */
+      --ring:          rgba(0,122,255,0.28);
+
+      /* Shadows */
+      --shadow-sm:     0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:     0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+
+      /* Shape */
+      --radius:        13px;
+      --radius-sm:     10px;
       --gap:           16px;
     }
+
     html[data-theme="dark"] {
-      --bg:            #0f1724;
-      --surface:       #172131;
-      --surface-2:     #1f2b3e;
-      --surface-hover: #27344a;
-      --border:        #2c3a53;
-      --border-strong: #3e4e6b;
-      --text:          #e7ecf3;
-      --text-muted:    #a7b2c2;
-      --text-soft:     #8a95a8;
-      --accent:        #5b8cff;
-      --accent-hover:  #7aa0ff;
-      --accent-text:   #0b1220;
-      --success:       #4ade80;
-      --danger:        #f87171;
-      --ring:          rgba(91,140,255,0.45);
-      --shadow-sm:     0 1px 2px rgba(0,0,0,0.4);
-      --shadow-md:     0 6px 16px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.3);
+      --bg:            #000000;
+      --surface:       #1C1C1E;
+      --surface-2:     #2C2C2E;
+      --surface-hover: rgba(120,120,128,0.22);
+      --border:        rgba(84,84,88,0.55);
+      --border-strong: rgba(84,84,88,0.65);
+      --text:          #FFFFFF;
+      --text-muted:    rgba(235,235,245,0.6);
+      --text-soft:     rgba(235,235,245,0.3);
+      --accent:        #0A84FF;
+      --accent-hover:  #409CFF;
+      --accent-text:   #FFFFFF;
+      --accent-tint:   rgba(10,132,255,0.18);
+      --success:       #30D158;
+      --danger:        #FF453A;
+      --warning-text:  #FFB340;
+      --warning-bg:    rgba(255,179,64,0.18);
+      --ring:          rgba(10,132,255,0.35);
+      --shadow-sm:     0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md:     0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4);
     }
 
-    /* ---------- Base ---------- */
-    * { box-sizing: border-box; }
+    /* ── Base ─────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
       font-size: 15px;
       line-height: 1.5;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
-      transition: background 0.2s ease, color 0.2s ease;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background 0.2s, color 0.2s;
     }
     h1, h2, h3 { margin: 0; font-weight: 600; }
     button, input, textarea, select { font: inherit; color: inherit; }
-    a { color: var(--accent); }
+    a { color: var(--accent); text-decoration: none; }
 
-    /* ---------- Layout ---------- */
+    /* ── Layout ───────────────────────────────────────────────────────────── */
     .app {
-      max-width: 1200px;
+      max-width: 1160px;
       margin: 0 auto;
-      /* Extra padding when running as a standalone PWA (notch / Dynamic Island) */
-      padding: max(20px, calc(env(safe-area-inset-top) + 8px))
+      padding: max(24px, calc(env(safe-area-inset-top) + 12px))
                max(20px, env(safe-area-inset-right))
-               max(20px, calc(env(safe-area-inset-bottom) + 8px))
+               max(32px, calc(env(safe-area-inset-bottom) + 12px))
                max(20px, env(safe-area-inset-left));
     }
+
+    /* ── Header ───────────────────────────────────────────────────────────── */
     header.top {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 14px;
+      margin-bottom: 28px;
     }
     header.top .brand {
       display: flex;
@@ -96,12 +121,16 @@
       min-width: 0;
     }
     header.top .brand h1 {
-      font-size: 20px;
-      letter-spacing: -0.01em;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
     }
     header.top .brand .subtitle {
       font-size: 13px;
       color: var(--text-muted);
+      letter-spacing: -0.1px;
+      margin-top: 2px;
     }
     header.top .actions {
       display: flex;
@@ -111,29 +140,30 @@
     main {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 18px;
     }
     @media (min-width: 900px) {
       main {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0,1fr) minmax(0,1fr);
         align-items: start;
       }
       .col-wide { grid-column: 1 / -1; }
     }
 
+    /* ── Cards ────────────────────────────────────────────────────────────── */
     .card {
       background: var(--surface);
-      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
-      padding: 18px;
+      padding: 20px;
+      /* No hard border — Apple cards use shadow only */
     }
     .card h2 {
-      font-size: 14px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.10em;
       color: var(--text-muted);
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       font-weight: 600;
     }
     .card-header {
@@ -141,98 +171,113 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .card-header h2 { margin-bottom: 0; }
 
-    /* ---------- Buttons ---------- */
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 9px 14px;
+      gap: 7px;
+      height: 36px;
+      padding: 0 14px;
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-strong);
-      background: var(--surface);
+      border: none;
+      background: var(--surface-2);
       color: var(--text);
       cursor: pointer;
+      font-size: 15px;
       font-weight: 500;
-      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+      letter-spacing: -0.2px;
+      transition: opacity 0.12s, background 0.12s;
       user-select: none;
+      -webkit-user-select: none;
     }
-    .btn:hover { background: var(--surface-hover); }
-    .btn:active { transform: translateY(1px); }
-    .btn:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px var(--ring);
-    }
+    .btn:hover  { opacity: 0.82; }
+    .btn:active { opacity: 0.55; }
+    .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
+
     .btn.primary {
       background: var(--accent);
       color: var(--accent-text);
-      border-color: var(--accent);
+      font-weight: 600;
     }
-    .btn.primary:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
-    }
+    .btn.primary:hover { background: var(--accent); }
+
     .btn.icon {
-      padding: 8px 10px;
-      min-width: 38px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--surface-2);
+      color: var(--text-muted);
     }
+    .btn.icon:hover { color: var(--text); }
+
     .btn.ghost {
       background: transparent;
-      border-color: transparent;
-      color: var(--text-muted);
-      padding: 6px 10px;
-      font-size: 13px;
+      color: var(--accent);
+      font-size: 14px;
       font-weight: 500;
+      height: 32px;
+      padding: 0 10px;
     }
-    .btn.ghost:hover {
-      background: var(--surface-hover);
-      color: var(--text);
-    }
+    .btn.ghost:hover { background: var(--accent-tint); }
     .btn .icon-svg { width: 16px; height: 16px; flex: none; }
 
-    /* ---------- Template picker ---------- */
+    /* ── Template picker ──────────────────────────────────────────────────── */
     .templates {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
     }
     .template-card {
       text-align: left;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface-2);
+      padding: 13px 15px;
+      border: none;
+      background: var(--surface);
       cursor: pointer;
-      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      transition: background 0.12s;
       color: var(--text);
+      position: relative;
     }
-    .template-card:hover {
-      border-color: var(--border-strong);
-      background: var(--surface-hover);
-    }
+    .template-card:hover  { background: var(--surface-hover); }
+    .template-card:active { background: var(--surface-hover); opacity: 0.7; }
     .template-card.selected {
-      border-color: var(--accent);
-      background: var(--surface-hover);
-      box-shadow: 0 0 0 3px var(--ring);
+      background: var(--accent-tint);
+    }
+    .template-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 12px; right: 13px;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 14px;
     }
     .template-card .name {
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
+      letter-spacing: -0.2px;
+      color: var(--accent);
     }
+    .template-card.selected .name { color: var(--accent); }
     .template-card .desc {
-      font-size: 12.5px;
+      font-size: 12px;
       color: var(--text-muted);
+      line-height: 1.4;
     }
 
-    /* ---------- Form ---------- */
+    /* ── Form ─────────────────────────────────────────────────────────────── */
     .fields {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 14px;
     }
     @media (min-width: 520px) {
       .fields.two-col { grid-template-columns: 1fr 1fr; }
@@ -241,97 +286,103 @@
     .field {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
     }
     .field label {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
     .field .hint {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-soft);
     }
+
+    /* Apple-style fill inputs */
     .input, .textarea {
       width: 100%;
-      padding: 9px 11px;
-      border: 1px solid var(--border-strong);
+      padding: 10px 12px;
+      border: 1.5px solid transparent;
       border-radius: var(--radius-sm);
-      background: var(--surface);
+      background: var(--surface-2);
       color: var(--text);
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
     }
     .input:focus, .textarea:focus {
       outline: none;
       border-color: var(--accent);
+      background: var(--surface);
       box-shadow: 0 0 0 3px var(--ring);
     }
     .input[disabled] {
-      background: var(--surface-2);
-      color: var(--text-soft);
+      opacity: 0.45;
       cursor: not-allowed;
     }
-    .input-prefix {
-      position: relative;
-    }
+    select.input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+    .input-prefix { position: relative; }
     .input-prefix .prefix {
-      position: absolute;
-      left: 11px;
-      top: 50%;
+      position: absolute; left: 12px; top: 50%;
       transform: translateY(-50%);
-      color: var(--text-muted);
-      pointer-events: none;
+      color: var(--text-muted); pointer-events: none;
+      font-size: 15px;
     }
-    .input-prefix .input { padding-left: 24px; }
+    .input-prefix .input { padding-left: 22px; }
 
     .checkbox-row {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      align-items: flex-start;
+      gap: 10px;
       font-size: 13px;
       color: var(--text-muted);
       margin-bottom: 4px;
+      line-height: 1.4;
     }
     .checkbox-row input[type="checkbox"] {
       accent-color: var(--accent);
-      width: 16px;
-      height: 16px;
+      width: 17px; height: 17px;
+      margin-top: 1px; flex-shrink: 0;
     }
 
     .empty {
-      padding: 30px 10px;
+      padding: 36px 10px;
       text-align: center;
       color: var(--text-soft);
       font-size: 14px;
     }
 
-    /* ---------- Preview ---------- */
+    /* ── Preview ──────────────────────────────────────────────────────────── */
     .preview {
       display: block;
       width: 100%;
       white-space: pre-wrap;
       word-break: break-word;
       background: var(--surface-2);
-      border: 1px dashed var(--border-strong);
+      border: 1.5px solid transparent;
       border-radius: var(--radius-sm);
       padding: 14px;
       min-height: 140px;
       font-size: 14.5px;
-      line-height: 1.55;
+      line-height: 1.6;
       color: var(--text);
       resize: vertical;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      letter-spacing: -0.1px;
     }
     .preview:focus {
       outline: none;
       border-color: var(--accent);
-      border-style: solid;
+      background: var(--surface);
       box-shadow: 0 0 0 3px var(--ring);
     }
-    .preview:disabled {
-      cursor: default;
-      opacity: 1;
-    }
+    .preview:disabled { cursor: default; opacity: 1; }
 
     .preview-actions {
       display: flex;
@@ -339,59 +390,66 @@
       gap: 8px;
       margin-top: 14px;
     }
-    .preview-actions .btn { flex: 1 1 auto; min-width: 120px; }
+    .preview-actions .btn {
+      flex: 1 1 auto;
+      min-width: 110px;
+      height: 40px;
+      border-radius: 999px;
+      font-size: 14px;
+    }
+    .preview-actions .btn.primary {
+      border-radius: 999px;
+    }
 
     .sms-counter {
-      margin-top: 10px;
-      font-size: 12.5px;
-      color: var(--text-muted);
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-soft);
+      letter-spacing: -0.05px;
     }
-    .sms-counter.warn  { color: #b5761a; font-weight: 500; }
-    .sms-counter.over  { color: var(--danger); font-weight: 500; }
-    html[data-theme="dark"] .sms-counter.warn { color: #f5b454; }
+    .sms-counter.warn { color: var(--warning-text); font-weight: 500; }
+    .sms-counter.over { color: var(--danger); font-weight: 500; }
 
     .quick-dates {
       display: flex;
       gap: 6px;
-      margin-top: 6px;
+      margin-top: 7px;
       flex-wrap: wrap;
     }
     .quick-dates button {
-      padding: 4px 10px;
-      font-size: 12.5px;
-      border: 1px solid var(--border-strong);
-      background: var(--surface-2);
-      color: var(--text-muted);
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      background: var(--accent-tint);
+      color: var(--accent);
       border-radius: 999px;
       cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      letter-spacing: -0.1px;
+      transition: opacity 0.12s;
     }
-    .quick-dates button:hover {
-      background: var(--surface-hover);
-      color: var(--text);
-      border-color: var(--accent);
-    }
-    .quick-dates button:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px var(--ring);
-    }
+    .quick-dates button:hover  { opacity: 0.75; }
+    .quick-dates button:active { opacity: 0.45; }
+    .quick-dates button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
 
-    /* ---------- Toast ---------- */
+    /* ── Toast ────────────────────────────────────────────────────────────── */
     .toast {
       position: fixed;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%) translateY(20px);
-      background: var(--text);
-      color: var(--bg);
-      padding: 10px 16px;
+      left: 50%; bottom: 28px;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(50,50,52,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #FFFFFF;
+      padding: 10px 20px;
       border-radius: 999px;
       box-shadow: var(--shadow-md);
       font-size: 13.5px;
       font-weight: 500;
+      letter-spacing: -0.1px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      transition: opacity 0.2s, transform 0.2s;
       z-index: 100;
     }
     .toast.show {
@@ -399,10 +457,12 @@
       transform: translateX(-50%) translateY(0);
     }
 
-    /* ---------- Modal ---------- */
+    /* ── Modal ────────────────────────────────────────────────────────────── */
     .modal-backdrop {
       position: fixed; inset: 0;
-      background: rgba(10,15,25,0.55);
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -412,39 +472,43 @@
     .modal-backdrop.open { display: flex; }
     .modal {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 16px;
       box-shadow: var(--shadow-md);
       width: 100%;
       max-width: 520px;
       max-height: 90vh;
       overflow: auto;
-      padding: 20px;
+      padding: 24px;
     }
     .modal header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .modal header h2 {
       font-size: 17px;
+      font-weight: 700;
       text-transform: none;
-      letter-spacing: 0;
+      letter-spacing: -0.3px;
       color: var(--text);
     }
     .modal footer {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
-      margin-top: 18px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 0.5px solid var(--border);
     }
+    .modal footer .btn { height: 40px; border-radius: 999px; }
+    .modal footer .btn.primary { min-width: 100px; }
 
-    /* ---------- Calendar drop overlay ---------- */
+    /* ── Drop overlay ─────────────────────────────────────────────────────── */
     .drop-overlay {
       position: fixed; inset: 0;
-      background: rgba(47,107,237,0.10);
-      backdrop-filter: blur(3px);
+      background: rgba(0,122,255,0.08);
+      backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -456,52 +520,216 @@
     .drop-overlay-inner {
       background: var(--surface);
       border: 2px solid var(--accent);
-      border-radius: var(--radius);
+      border-radius: 20px;
       box-shadow: var(--shadow-md);
-      padding: 32px 48px;
+      padding: 36px 52px;
       text-align: center;
       color: var(--accent);
     }
-    .drop-overlay-inner svg { width: 44px; height: 44px; margin-bottom: 10px; display: block; margin-inline: auto; }
-    .drop-overlay-inner p { font-size: 20px; font-weight: 600; margin: 0; }
+    .drop-overlay-inner svg { width: 44px; height: 44px; margin-bottom: 12px; display: block; margin-inline: auto; opacity: 0.8; }
+    .drop-overlay-inner p   { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.4px; }
     .drop-overlay-inner small { font-size: 13px; color: var(--text-muted); font-weight: 400; }
 
-    /* ---------- Reminders list ---------- */
+    /* ── Reminders list ───────────────────────────────────────────────────── */
     .reminder-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
+      padding: 11px 0;
+      border-bottom: 0.5px solid var(--border);
       flex-wrap: wrap;
     }
     .reminder-row:last-child { border-bottom: none; }
     .reminder-info { flex: 1; min-width: 160px; }
-    .reminder-name { font-weight: 600; font-size: 14px; }
-    .reminder-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
+    .reminder-name { font-weight: 600; font-size: 14px; letter-spacing: -0.2px; }
+    .reminder-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; letter-spacing: -0.1px; }
     .reminder-when {
-      font-size: 13px;
+      font-size: 12.5px;
       color: var(--text-muted);
       white-space: nowrap;
-      min-width: 140px;
+      min-width: 130px;
+      letter-spacing: -0.1px;
     }
     .reminder-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
+
+    /* Apple-style pill badges */
     .badge {
-      display: inline-block;
-      padding: 2px 8px;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
       border-radius: 999px;
-      font-size: 11.5px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       vertical-align: middle;
       margin-left: 6px;
     }
-    .badge.upcoming { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
-    .badge.due      { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-    .badge.overdue  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    html[data-theme="dark"] .badge.due     { background: #78350f; color: #fde68a; border-color: #b45309; }
-    html[data-theme="dark"] .badge.overdue { background: #7f1d1d; color: #fca5a5; border-color: #dc2626; }
+    .badge.upcoming {
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border: 1px solid var(--border-strong);
+    }
+    .badge.due {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+    .badge.overdue {
+      background: rgba(255,59,48,0.12);
+      color: var(--danger);
+    }
+    html[data-theme="dark"] .badge.due {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+    html[data-theme="dark"] .badge.overdue {
+      background: rgba(255,69,58,0.2);
+      color: var(--danger);
+    }
 
-    /* ---------- Misc ---------- */
+    /* ── Rendered preview (with red placeholder highlights) ──────────────── */
+    .preview-rendered {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      min-height: 80px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      letter-spacing: -0.1px;
+    }
+    .preview-rendered.has-missing {
+      border-color: rgba(255,59,48,0.35);
+      background: rgba(255,59,48,0.04);
+    }
+    .placeholder-missing {
+      color: var(--danger);
+      font-weight: 600;
+      background: rgba(255,59,48,0.10);
+      border-radius: 3px;
+      padding: 0 3px;
+    }
+    .missing-fields-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,59,48,0.08);
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--danger);
+      font-weight: 500;
+    }
+    .missing-fields-bar.show { display: flex; }
+    .missing-fields-bar svg { flex-shrink: 0; }
+
+    .preview-edit-toggle {
+      font-size: 12px;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 0;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .preview-edit-toggle:hover { opacity: 0.7; }
+    @media (max-width: 640px) {
+      .preview-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        background: var(--surface);
+        margin: 0 -20px -20px;
+        padding: 12px 20px max(20px, env(safe-area-inset-bottom));
+        border-top: 0.5px solid var(--border);
+      }
+      .template-card { min-height: 72px; padding: 14px 15px; }
+    }
+
+    /* ── Template search ──────────────────────────────────────────────────── */
+    .template-search {
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .template-search input {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .template-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--ring);
+    }
+    .template-search .search-icon {
+      position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-soft); pointer-events: none;
+    }
+
+    /* ── Recent customers ─────────────────────────────────────────────────── */
+    .recent-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+    }
+    .recent-chip {
+      padding: 4px 12px; border-radius: 999px; border: none; cursor: pointer;
+      background: var(--accent-tint); color: var(--accent);
+      font-size: 12px; font-weight: 500;
+      transition: opacity 0.12s;
+    }
+    .recent-chip:hover { opacity: 0.75; }
+
+    /* ── Sent confirmation ────────────────────────────────────────────────── */
+    .sent-confirm {
+      display: none; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      background: rgba(52,199,89,0.12); margin-top: 12px;
+      font-size: 14px; color: var(--success); font-weight: 500;
+    }
+    .sent-confirm.show { display: flex; }
+
+    /* ── History & Queue ──────────────────────────────────────────────────── */
+    .history-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 11px 0; border-bottom: 0.5px solid var(--border);
+    }
+    .history-row:last-child { border-bottom: none; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+    .history-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .history-msg  { font-size: 12px; color: var(--text-soft); margin-top: 3px;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-via  {
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .history-via.copy      { background: var(--surface-2); color: var(--text-muted); }
+    .history-via.sms       { background: rgba(52,199,89,0.12); color: var(--success); }
+    .history-via.whatsapp  { background: rgba(37,211,102,0.12); color: #25d366; }
+    .history-via.email     { background: var(--accent-tint); color: var(--accent); }
+
+    .queue-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0; border-bottom: 0.5px solid var(--border);
+    }
+    .queue-row:last-child { border-bottom: none; }
+    .queue-info { flex: 1; min-width: 0; }
+    .queue-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+    .queue-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Misc ─────────────────────────────────────────────────────────────── */
     .muted { color: var(--text-muted); }
     .sr-only {
       position: absolute; width: 1px; height: 1px;
@@ -530,6 +758,10 @@
     <main>
       <section class="card col-wide">
         <h2>1. Choose a message</h2>
+        <div class="template-search">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="templateSearch" placeholder="Filter templates…" autocomplete="off">
+        </div>
         <div class="templates" id="templatePicker" role="radiogroup" aria-label="Message templates"></div>
       </section>
 
@@ -539,6 +771,24 @@
           <h2>Scheduled reminders</h2>
         </div>
         <div id="remindersBody"></div>
+      </section>
+
+      <!-- Bulk queue — only shown when items exist -->
+      <section class="card col-wide" id="queueSection" hidden aria-label="Send queue">
+        <div class="card-header">
+          <h2>Send queue</h2>
+          <button class="btn ghost" id="clearQueueBtn">Clear all</button>
+        </div>
+        <div id="queueBody"></div>
+      </section>
+
+      <!-- Message history — only shown when items exist -->
+      <section class="card col-wide" id="historySection" hidden aria-label="Message history">
+        <div class="card-header">
+          <h2>Message history</h2>
+          <button class="btn ghost" id="clearHistoryBtn">Clear</button>
+        </div>
+        <div id="historyBody"></div>
       </section>
 
       <section class="card">
@@ -554,7 +804,9 @@
             <button class="btn ghost" id="resetBtn" hidden title="Clear all form fields and start a new customer">New customer</button>
           </div>
         </div>
-        <textarea class="preview" id="preview" spellcheck="true" aria-label="Message preview — editable" disabled>Pick a template above to start.</textarea>
+        <textarea class="preview" id="preview" spellcheck="true" aria-label="Message preview — editable" disabled style="display:none;">Pick a template above to start.</textarea>
+        <div class="preview-rendered" id="previewRendered">Pick a template above to start.</div>
+        <button class="preview-edit-toggle" id="previewEditToggle" hidden>✏️ Edit message manually</button>
         <div id="autoExpandRow" hidden style="margin-top:8px;">
           <label class="checkbox-row" style="font-size:13px;color:var(--text-muted);cursor:pointer;">
             <input type="checkbox" id="autoExpandToggle" checked>
@@ -562,6 +814,14 @@
           </label>
         </div>
         <div class="sms-counter" id="smsCounter" hidden></div>
+        <div class="missing-fields-bar" id="missingFieldsBar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="missingFieldsText">Fill in required fields before sending</span>
+        </div>
+        <div class="sent-confirm" id="sentConfirm">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="sentConfirmText">Sent!</span>
+        </div>
         <div class="preview-actions" id="previewActions" hidden>
           <button class="btn primary" id="copyBtn">
             <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -582,6 +842,10 @@
           <button class="btn" id="scheduleBtn">
             <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Schedule
+          </button>
+          <button class="btn" id="addToQueueBtn">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add to Queue
           </button>
         </div>
       </section>
@@ -672,6 +936,182 @@
 
   <script>
   'use strict';
+
+  /* =========================================================================
+     RECENT CUSTOMERS
+     ========================================================================= */
+  const RECENT_KEY  = 'tidyride.reminders.recent.v1';
+  const HISTORY_KEY = 'tidyride.reminders.history.v1';
+  const QUEUE_KEY   = 'tidyride.reminders.queue2.v1';
+
+  function loadRecent()  { try { return JSON.parse(localStorage.getItem(RECENT_KEY)  || '[]'); } catch(e){ return []; } }
+  function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e){ return []; } }
+  function loadQueue2()  { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)   || '[]'); } catch(e){ return []; } }
+
+  function saveRecent(r)  { try { localStorage.setItem(RECENT_KEY,  JSON.stringify(r)); } catch(e){} }
+  function saveHistory(h) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch(e){} }
+  function saveQueue2(q)  { try { localStorage.setItem(QUEUE_KEY,   JSON.stringify(q)); } catch(e){} }
+
+  function pushRecent(name, phone, email) {
+    if (!name) return;
+    let r = loadRecent().filter(x => x.name !== name);
+    r.unshift({ name, phone: phone||'', email: email||'' });
+    r = r.slice(0, 5);
+    saveRecent(r);
+  }
+
+  function pushHistory(via, name, templateName, msgSnippet) {
+    let h = loadHistory();
+    h.unshift({ via, name, templateName, msgSnippet, ts: Date.now() });
+    h = h.slice(0, 30);
+    saveHistory(h);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const section = document.getElementById('historySection');
+    const body    = document.getElementById('historyBody');
+    const history = loadHistory();
+    if (!history.length) { section.hidden = true; return; }
+    section.hidden = false;
+    body.innerHTML = '';
+    history.forEach((item, idx) => {
+      const row = document.createElement('div');
+      row.className = 'history-row';
+      const ago = timeAgo(item.ts);
+      row.innerHTML = `
+        <div class="history-info">
+          <div class="history-name">${escapeHtml(item.name || 'Unknown')}</div>
+          <div class="history-meta">${escapeHtml(item.templateName || '')} · ${ago}</div>
+          <div class="history-msg">${escapeHtml(item.msgSnippet || '')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+          <span class="history-via ${item.via}">${item.via.toUpperCase()}</span>
+          <button class="btn ghost" style="color:var(--accent);font-size:12px;height:28px;padding:0 8px;">Load</button>
+        </div>
+      `;
+      row.querySelector('.btn').addEventListener('click', () => {
+        const tpl = TEMPLATES.find(t => t.name === item.templateName);
+        if (tpl) state.templateId = tpl.id;
+        state.form.customerName  = item.name  || '';
+        state.manualEdit = false;
+        renderAll();
+        showToast(`Loaded ${item.name}`);
+      });
+      body.appendChild(row);
+    });
+  }
+
+  function renderQueue2() {
+    const section = document.getElementById('queueSection');
+    const body    = document.getElementById('queueBody');
+    const queue   = loadQueue2();
+    if (!queue.length) { section.hidden = true; return; }
+    section.hidden = false;
+    body.innerHTML = '';
+    queue.forEach((item, idx) => {
+      const row = document.createElement('div');
+      row.className = 'queue-row';
+      row.innerHTML = `
+        <div class="queue-info">
+          <div class="queue-name">${escapeHtml(item.name || 'Unknown')}</div>
+          <div class="queue-meta">${escapeHtml(item.templateName || '')}</div>
+        </div>
+        <select class="input" data-idx="${idx}" data-action="via" style="width:auto;padding:5px 10px;font-size:12px;height:32px;">
+          <option value="SMS"${item.via==='SMS'?' selected':''}>SMS</option>
+          <option value="WhatsApp"${item.via==='WhatsApp'?' selected':''}>WhatsApp</option>
+          <option value="Email"${item.via==='Email'?' selected':''}>Email</option>
+        </select>
+        <button class="btn ghost" data-idx="${idx}" data-action="load" style="color:var(--accent)">Load</button>
+        <button class="btn ghost" data-idx="${idx}" data-action="remove" style="color:var(--danger)">Remove</button>
+      `;
+      body.appendChild(row);
+    });
+    body.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('change', () => {
+        if (btn.dataset.action === 'via') {
+          const queue = loadQueue2();
+          queue[Number(btn.dataset.idx)].via = btn.value;
+          saveQueue2(queue);
+        }
+      });
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        const queue = loadQueue2();
+        const item  = queue[idx];
+        if (btn.dataset.action === 'load') {
+          // Restore state from queue item
+          state.templateId = item.templateId;
+          state.form.customerName  = item.name  || '';
+          state.form.customerPhone = item.phone || '';
+          state.form.customerEmail = item.email || '';
+          state.form.service       = item.service || '';
+          state.form.amount        = item.amount || '';
+          state.form.date          = item.date  || '';
+          state.form.time          = item.time  || '';
+          state.manualEdit = false;
+          renderAll();
+          showToast(`Loaded ${item.name}`);
+        }
+        if (btn.dataset.action === 'remove') {
+          queue.splice(idx, 1);
+          saveQueue2(queue);
+          renderQueue2();
+        }
+      });
+    });
+  }
+
+  function addToQueue() {
+    const tpl   = getTemplate();
+    if (!tpl) { showToast('Pick a template first'); return; }
+    const name  = state.form.customerName;
+    if (!name)  { showToast('Enter a customer name first'); return; }
+    const phone = state.form.customerPhone.trim();
+    const email = state.form.customerEmail.trim();
+    if (!phone && !email) { showToast('Enter a phone or email first'); return; }
+
+    const queue   = loadQueue2();
+    const baseItem = {
+      templateId:   state.templateId,
+      templateName: tpl.name,
+      name,
+      phone, email,
+      service: state.form.service,
+      amount:  state.form.amount,
+      date:    state.form.date,
+      time:    state.form.time,
+    };
+
+    const vias = [];
+    if (phone) vias.push('SMS');
+    if (email) vias.push('Email');
+
+    let added = 0;
+    vias.forEach(via => {
+      if (queue.find(x => x.name === name && x.templateId === state.templateId && x.via === via)) {
+        showToast(`${name} (${via}) is already in the queue`);
+        return;
+      }
+      queue.push({ ...baseItem, via });
+      added++;
+    });
+
+    if (added > 0) {
+      saveQueue2(queue);
+      renderQueue2();
+      const label = added === 2 ? `${name} added twice — SMS & Email` : `${name} added to queue`;
+      showToast(label);
+    }
+  }
+
+  function timeAgo(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60)   return 'just now';
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    if (s < 86400)return `${Math.floor(s/3600)}h ago`;
+    return `${Math.floor(s/86400)}d ago`;
+  }
 
   /* =========================================================================
      TEMPLATES — edit these later
@@ -1058,9 +1498,19 @@ If you've got 30 seconds, a quick Google review would really help the business: 
      RENDER: template picker
      ========================================================================= */
   function renderTemplates() {
-    const host = document.getElementById('templatePicker');
+    const host   = document.getElementById('templatePicker');
+    const search = (document.getElementById('templateSearch')?.value || '').toLowerCase().trim();
+    const list   = search ? TEMPLATES.filter(t =>
+      t.name.toLowerCase().includes(search) || (t.description||'').toLowerCase().includes(search)
+    ) : TEMPLATES;
+    const history = loadHistory();
     host.innerHTML = '';
-    TEMPLATES.forEach(t => {
+    if (!list.length) {
+      host.innerHTML = '<div class="empty" style="grid-column:1/-1">No templates match — try a different search.</div>';
+      return;
+    }
+    list.forEach(t => {
+      const uses = history.filter(h => h.templateName === t.name).length;
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'template-card' + (state.templateId === t.id ? ' selected' : '');
@@ -1069,6 +1519,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       b.innerHTML = `
         <div class="name">${escapeHtml(t.name)}</div>
         <div class="desc">${escapeHtml(t.description || '')}</div>
+        ${uses > 0 ? `<div style="margin-top:5px;font-size:11px;color:var(--text-soft);">Used ${uses} time${uses>1?'s':''}</div>` : ''}
       `;
       b.addEventListener('click', () => {
         state.templateId = t.id;
@@ -1087,21 +1538,34 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     host.innerHTML = '';
 
     const tpl = getTemplate();
-    if (!tpl) {
-      host.innerHTML = '<div class="empty">Pick a template above to see the fields you need.</div>';
-      return;
-    }
-
-    const fields = activeFields(tpl);
     const wrap = document.createElement('div');
     wrap.className = 'fields two-col';
     host.appendChild(wrap);
 
-    fields.forEach(name => {
+    // Always show customer basics upfront
+    ['customerName', 'customerPhone', 'customerEmail'].forEach(name => {
+      const def = FIELD_DEFS[name];
+      if (def) wrap.appendChild(buildField(name, def));
+    });
+
+    if (!tpl) {
+      const hint = document.createElement('div');
+      hint.className = 'field full';
+      hint.innerHTML = `<div class="empty" style="padding:24px 10px;">
+        <div style="font-size:28px;margin-bottom:8px;">💬</div>
+        <div style="font-weight:600;color:var(--text-muted);margin-bottom:4px;">Choose a message template above</div>
+        <div style="font-size:13px;color:var(--text-soft);">More fields will appear here</div>
+      </div>`;
+      wrap.appendChild(hint);
+      return;
+    }
+
+    // Template-specific fields (skip basics already shown)
+    const basics = new Set(['customerName', 'customerPhone', 'customerEmail']);
+    activeFields(tpl).filter(f => !basics.has(f)).forEach(name => {
       const def = FIELD_DEFS[name];
       if (!def) return;
-      const node = buildField(name, def);
-      wrap.appendChild(node);
+      wrap.appendChild(buildField(name, def));
     });
   }
 
@@ -1250,11 +1714,47 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       input.type = def.type;
       if (def.placeholder) input.placeholder = def.placeholder;
       input.value = state.form[name] || '';
+      if (name === 'customerName') {
+        input.setAttribute('autocapitalize', 'words');
+        input.setAttribute('autocomplete', 'name');
+        input.addEventListener('input', () => {
+          const pos = input.selectionStart;
+          const capitalised = input.value.replace(/\b\w/g, c => c.toUpperCase());
+          if (capitalised !== input.value) {
+            input.value = capitalised;
+            input.setSelectionRange(pos, pos);
+          }
+        });
+      }
       input.addEventListener('input', e => {
         state.form[name] = e.target.value;
         renderPreview();
       });
       wrap.appendChild(input);
+
+      // Recent customer chips (below name field)
+      if (name === 'customerName') {
+        const recent = loadRecent();
+        if (recent.length) {
+          const chips = document.createElement('div');
+          chips.className = 'recent-chips';
+          recent.forEach(r => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'recent-chip';
+            chip.textContent = r.name;
+            chip.addEventListener('click', () => {
+              state.form.customerName  = r.name;
+              state.form.customerPhone = r.phone || state.form.customerPhone;
+              state.form.customerEmail = r.email || state.form.customerEmail;
+              renderForm();
+              renderPreview();
+            });
+            chips.appendChild(chip);
+          });
+          wrap.appendChild(chips);
+        }
+      }
 
       // Quick-pick buttons for date fields
       if (def.type === 'date') {
@@ -1320,44 +1820,91 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   }
 
   function renderPreview() {
-    const tpl = getTemplate();
-    const preview      = document.getElementById('preview');
-    const actions      = document.getElementById('previewActions');
-    const counter      = document.getElementById('smsCounter');
-    const reset        = document.getElementById('resetBtn');
-    const resetDraft   = document.getElementById('resetDraftBtn');
+    const tpl        = getTemplate();
+    const preview    = document.getElementById('preview');
+    const rendered   = document.getElementById('previewRendered');
+    const actions    = document.getElementById('previewActions');
+    const counter    = document.getElementById('smsCounter');
+    const reset      = document.getElementById('resetBtn');
+    const resetDraft = document.getElementById('resetDraftBtn');
+    const missingBar = document.getElementById('missingFieldsBar');
+    const missingTxt = document.getElementById('missingFieldsText');
+    const editToggle = document.getElementById('previewEditToggle');
+
     if (!tpl) {
-      preview.value  = 'Pick a template above to start.';
+      preview.value    = 'Pick a template above to start.';
       preview.disabled = true;
-      preview.style.height = '';
-      preview.style.overflow = '';
-      preview.style.resize = '';
-      actions.hidden = true;
-      counter.hidden = true;
-      reset.hidden   = true;
+      preview.style.display = 'none';
+      rendered.innerHTML = 'Pick a template above to start.';
+      rendered.className = 'preview-rendered';
+      actions.hidden   = true;
+      counter.hidden   = true;
+      reset.hidden     = true;
       resetDraft.hidden = true;
+      missingBar.classList.remove('show');
+      editToggle.hidden = true;
       document.getElementById('autoExpandRow').hidden = true;
       return;
     }
-    const plainResult = fillTemplate(tpl.body, placeholderValues(), { html: false });
-    // Only overwrite the textarea if the user hasn't manually edited it
+
+    const values      = placeholderValues();
+    const plainResult = fillTemplate(tpl.body, values, { html: false });
+    const htmlResult  = fillTemplate(tpl.body, values, { html: true  });
+
+    // Update textarea (for manual editing)
     if (!state.manualEdit) {
       preview.value = plainResult.text;
     }
-    preview.disabled = false;
-    actions.hidden = false;
-    reset.hidden   = false;
-    resetDraft.hidden = !state.manualEdit;
 
-    // Keep checkbox in sync with state
+    // Update rendered div with highlighted missing placeholders
+    const hasMissing = htmlResult.missing.length > 0;
+    // Build coloured HTML: wrap {{x}} in red span
+    const colouredHtml = (state.manualEdit ? escapeHtml(preview.value) : htmlResult.text)
+      .replace(/\{\{(\w+)\}\}/g, (_, k) =>
+        `<span class="placeholder-missing">{{${k}}}</span>`
+      );
+    rendered.innerHTML = colouredHtml;
+    rendered.className = 'preview-rendered' + (hasMissing ? ' has-missing' : '');
+
+    // Missing fields bar
+    if (hasMissing) {
+      const names = htmlResult.missing.map(k => {
+        const def = FIELD_DEFS[k];
+        return def ? def.label : k;
+      });
+      missingTxt.textContent = `Fill in: ${names.join(', ')}`;
+      missingBar.classList.add('show');
+    } else {
+      missingBar.classList.remove('show');
+    }
+
+    // Disable send buttons when fields missing
+    const sendIds = ['copyBtn','smsBtn','whatsappBtn','emailBtn','scheduleBtn','addToQueueBtn'];
+    sendIds.forEach(id => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = hasMissing;
+      btn.style.opacity = hasMissing ? '0.38' : '';
+      btn.style.cursor  = hasMissing ? 'not-allowed' : '';
+    });
+
+    preview.disabled  = false;
+    actions.hidden    = false;
+    reset.hidden      = false;
+    resetDraft.hidden = !state.manualEdit;
+    editToggle.hidden = false;
+    editToggle.textContent = state.manualEdit ? '↺ Back to auto preview' : '✏️ Edit message manually';
+
+    // Show/hide textarea
+    preview.style.display = state.manualEdit ? 'block' : 'none';
+
     const autoExpandRow    = document.getElementById('autoExpandRow');
     const autoExpandToggle = document.getElementById('autoExpandToggle');
-    autoExpandRow.hidden           = false;
-    autoExpandToggle.checked       = state.autoExpand;
+    autoExpandRow.hidden         = !state.manualEdit;
+    autoExpandToggle.checked     = state.autoExpand;
 
-    applyAutoExpand(preview);
-    updateSmsCounter();
-    counter.hidden = false;
+    if (state.manualEdit) applyAutoExpand(preview);
+    counter.hidden = true;
   }
 
   /* =========================================================================
@@ -1368,6 +1915,17 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     return preview ? preview.value : '';
   }
 
+  let confirmTimer = null;
+  function showSentConfirm(label) {
+    const el   = document.getElementById('sentConfirm');
+    const text = document.getElementById('sentConfirmText');
+    const name = state.form.customerName;
+    text.textContent = name ? `${label} to ${name} ✓` : `${label} ✓`;
+    el.classList.add('show');
+    clearTimeout(confirmTimer);
+    confirmTimer = setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
   async function copyToClipboard() {
     const text = plainFilled();
     if (!text) return;
@@ -1375,7 +1933,6 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       await navigator.clipboard.writeText(text);
       showToast('Copied to clipboard');
     } catch (e) {
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -1384,6 +1941,10 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       catch (_) { showToast('Copy failed — select and copy manually'); }
       document.body.removeChild(ta);
     }
+    const tpl = getTemplate();
+    pushRecent(state.form.customerName, state.form.customerPhone, state.form.customerEmail);
+    pushHistory('copy', state.form.customerName, tpl?.name || '', text.slice(0,80));
+    showSentConfirm('Copied');
   }
 
   function openSms() {
@@ -1391,12 +1952,13 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (!text) return;
     const phone = state.form.customerPhone.replace(/\s+/g, '');
     if (!phone) { showToast('Enter the customer phone first'); return; }
-    // sms: URI — body param works on iOS/Android Messages; separator differs per platform
-    // Most reliable across platforms:
     const ua = navigator.userAgent || '';
     const sep = /iPhone|iPad|Macintosh/i.test(ua) ? '&' : '?';
-    const url = `sms:${phone}${sep}body=${encodeURIComponent(text)}`;
-    window.location.href = url;
+    window.location.href = `sms:${phone}${sep}body=${encodeURIComponent(text)}`;
+    const tpl = getTemplate();
+    pushRecent(state.form.customerName, state.form.customerPhone, state.form.customerEmail);
+    pushHistory('sms', state.form.customerName, tpl?.name || '', text.slice(0,80));
+    showSentConfirm('SMS sent');
   }
 
   function openEmail() {
@@ -1406,20 +1968,10 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (!to) { showToast('Enter the customer email first'); return; }
     const tpl = getTemplate();
     const subject = tpl ? `${state.settings.businessName || 'TidyRide'} — ${tpl.name}` : 'Message';
-    const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-    window.location.href = url;
-  }
-
-  // Normalise a UK phone number to international form for wa.me (no + or spaces).
-  // "07396 366584" -> "447396366584". Numbers already in +44 / 00 44 form are
-  // handled too. Non-UK international (e.g. "+33…") passes through unchanged.
-  function normaliseUkPhone(raw) {
-    let p = String(raw || '').replace(/[\s\-()]/g, '');
-    if (!p) return '';
-    if (p.startsWith('+')) return p.slice(1);
-    if (p.startsWith('00')) return p.slice(2);
-    if (p.startsWith('0'))  return '44' + p.slice(1);
-    return p;
+    window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+    pushRecent(state.form.customerName, state.form.customerPhone, state.form.customerEmail);
+    pushHistory('email', state.form.customerName, tpl?.name || '', text.slice(0,80));
+    showSentConfirm('Email opened');
   }
 
   function openWhatsApp() {
@@ -1427,8 +1979,11 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (!text) return;
     const phone = normaliseUkPhone(state.form.customerPhone);
     if (!phone) { showToast('Enter the customer phone first'); return; }
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    const tpl = getTemplate();
+    pushRecent(state.form.customerName, state.form.customerPhone, state.form.customerEmail);
+    pushHistory('whatsapp', state.form.customerName, tpl?.name || '', text.slice(0,80));
+    showSentConfirm('WhatsApp opened');
   }
 
   function resetForm() {
@@ -1449,11 +2004,54 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     showToast('Form cleared — ready for the next customer');
   }
 
+  // Normalise a UK phone number to international form for wa.me
+  function normaliseUkPhone(raw) {
+    let p = String(raw || '').replace(/[\s\-()]/g, '');
+    if (!p) return '';
+    if (p.startsWith('+')) return p.slice(1);
+    if (p.startsWith('00')) return p.slice(2);
+    if (p.startsWith('0'))  return '44' + p.slice(1);
+    return p;
+  }
+
   document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
   document.getElementById('smsBtn').addEventListener('click', openSms);
   document.getElementById('whatsappBtn').addEventListener('click', openWhatsApp);
   document.getElementById('emailBtn').addEventListener('click', openEmail);
   document.getElementById('resetBtn').addEventListener('click', resetForm);
+  document.getElementById('addToQueueBtn').addEventListener('click', addToQueue);
+  document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+    if (confirm('Clear all message history? This cannot be undone.')) {
+      saveHistory([]); renderHistory();
+    }
+  });
+  document.getElementById('clearQueueBtn').addEventListener('click', () => {
+    if (confirm('Clear the entire send queue?')) {
+      saveQueue2([]); renderQueue2();
+    }
+  });
+
+  // Keyboard shortcut: Cmd/Ctrl+Enter to copy
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      copyToClipboard();
+    }
+  });
+
+  // Preview edit toggle
+  document.getElementById('previewEditToggle').addEventListener('click', () => {
+    state.manualEdit = !state.manualEdit;
+    if (!state.manualEdit) {
+      // Reset to auto on toggle back
+      const tpl = getTemplate();
+      if (tpl) {
+        const plain = fillTemplate(tpl.body, placeholderValues(), { html: false });
+        document.getElementById('preview').value = plain.text;
+      }
+    }
+    renderPreview();
+  });
 
   // Preview is directly editable — track manual changes
   document.getElementById('preview').addEventListener('input', () => {
@@ -1461,8 +2059,8 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       state.manualEdit = true;
       document.getElementById('resetDraftBtn').hidden = false;
     }
-    applyAutoExpand(document.getElementById('preview'));
-    updateSmsCounter();
+    if (state.manualEdit) applyAutoExpand(document.getElementById('preview'));
+    renderPreview();
   });
 
   document.getElementById('resetDraftBtn').addEventListener('click', () => {
@@ -2027,8 +2625,13 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     renderForm();
     renderPreview();
     renderReminders();
+    renderHistory();
+    renderQueue2();
   }
   renderAll();
+
+  // Template search
+  document.getElementById('templateSearch').addEventListener('input', renderTemplates);
   checkDueReminders();
   scheduleSessionNotifications();
 
