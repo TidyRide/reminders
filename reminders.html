@@ -586,26 +586,6 @@
       color: var(--danger);
     }
 
-    /* ── Rendered preview (with red placeholder highlights) ──────────────── */
-    .preview-rendered {
-      width: 100%;
-      background: var(--surface-2);
-      border: 1.5px solid transparent;
-      border-radius: var(--radius-sm);
-      padding: 14px;
-      min-height: 80px;
-      font-size: 14.5px;
-      line-height: 1.6;
-      color: var(--text);
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-      letter-spacing: -0.1px;
-    }
-    .preview-rendered.has-missing {
-      border-color: rgba(255,59,48,0.35);
-      background: rgba(255,59,48,0.04);
-    }
     .placeholder-missing {
       color: var(--danger);
       font-weight: 600;
@@ -629,17 +609,6 @@
     .missing-fields-bar.show { display: flex; }
     .missing-fields-bar svg { flex-shrink: 0; }
 
-    .preview-edit-toggle {
-      font-size: 12px;
-      color: var(--accent);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 0;
-      margin-top: 6px;
-      font-weight: 500;
-    }
-    .preview-edit-toggle:hover { opacity: 0.7; }
     @media (max-width: 640px) {
       .preview-actions {
         position: sticky;
