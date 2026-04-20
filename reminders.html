@@ -729,6 +729,33 @@
     .queue-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
     .queue-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
+    /* ── Location type selector ──────────────────────────────────────────── */
+    .loc-type-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .loc-type-btn {
+      padding: 5px 12px;
+      font-size: 12.5px;
+      font-weight: 500;
+      border: 1.5px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: -0.1px;
+      transition: all 0.12s;
+    }
+    .loc-type-btn:hover { opacity: 0.75; }
+    .loc-type-btn.active {
+      background: var(--accent-tint);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
     /* ── Misc ─────────────────────────────────────────────────────────────── */
     .muted { color: var(--text-muted); }
     .sr-only {
@@ -1193,13 +1220,14 @@ See you then!
       id: 'ready-to-collect',
       name: 'Ready to collect',
       description: "Vehicle's finished — time to come pick it up.",
-      fields: ['customerName', 'date', 'time', 'location'],
+      fields: ['customerName', 'time', 'location'],
+      defaults: { locationType: 'studio' },
       body:
 `Hi {{customerName}},
 
 Good news — your vehicle's all finished and ready to collect from {{location}}.
 
-I'll be here until {{time}} on {{date}} — pop in any time before then. If you need to collect later, just let me know.
+I'll be here until {{time}} today — pop in any time before then. If you need to collect later, just let me know.
 
 {{signature}}`
     },
@@ -1333,7 +1361,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       customerName: '',
       date: '',
       time: '',
-      locationUseBusiness: true,
+      locationType: 'business',
       locationCustom: '',
       service: '',
       amount: '',
@@ -1447,9 +1475,10 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   function placeholderValues() {
     const s = state.settings;
     const f = state.form;
-    const locationValue = f.locationUseBusiness
-      ? (s.businessAddress || '')
-      : f.locationCustom;
+    const locType = f.locationType || (f.locationUseBusiness ? 'business' : 'custom');
+    const locationValue = locType === 'studio'   ? 'The Studio'
+                        : locType === 'business' ? (s.businessAddress || '')
+                        : f.locationCustom;
 
     return {
       customerName:  f.customerName,
@@ -1524,6 +1553,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       b.addEventListener('click', () => {
         state.templateId = t.id;
         state.manualEdit = false;
+        if (t.defaults) Object.assign(state.form, t.defaults);
         renderAll();
       });
       host.appendChild(b);
@@ -1578,36 +1608,42 @@ If you've got 30 seconds, a quick Google review would really help the business: 
 
     const id = `f_${name}`;
     if (def.type === 'location') {
-      // Checkbox row
-      const cb = document.createElement('div');
-      cb.className = 'checkbox-row';
-      const checked = state.form.locationUseBusiness ? 'checked' : '';
+      const locType = state.form.locationType || 'business';
       const bizAddrOneLine = (state.settings.businessAddress || '').replace(/\s*\n+\s*/g, ', ').trim();
-      const bizAddrDisplay = bizAddrOneLine || 'not set — open Settings';
-      cb.innerHTML = `
-        <input type="checkbox" id="${id}_ub" ${checked}>
-        <label for="${id}_ub">Use business address <span class="muted">(${escapeHtml(bizAddrDisplay)})</span></label>
-      `;
-      wrap.appendChild(cb);
 
-      const inner = document.createElement('div');
-      inner.innerHTML = `
-        <label for="${id}">Customer address</label>
-        <input class="input" id="${id}" type="text" placeholder="Street, town, postcode"
-               value="${escapeHtml(state.form.locationCustom)}"
-               ${state.form.locationUseBusiness ? 'disabled' : ''}>
-      `;
-      wrap.appendChild(inner);
+      const seg = document.createElement('div');
+      seg.className = 'loc-type-row';
+      [
+        { key: 'studio',   label: 'The Studio' },
+        { key: 'business', label: bizAddrOneLine ? `Business (${bizAddrOneLine})` : 'Business address' },
+        { key: 'custom',   label: 'Custom address' }
+      ].forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'loc-type-btn' + (locType === opt.key ? ' active' : '');
+        btn.textContent = opt.label;
+        btn.addEventListener('click', () => {
+          state.form.locationType = opt.key;
+          renderForm();
+          renderPreview();
+        });
+        seg.appendChild(btn);
+      });
+      wrap.appendChild(seg);
 
-      cb.querySelector('input').addEventListener('change', e => {
-        state.form.locationUseBusiness = e.target.checked;
-        renderForm();
-        renderPreview();
-      });
-      wrap.querySelector(`#${id}`).addEventListener('input', e => {
-        state.form.locationCustom = e.target.value;
-        renderPreview();
-      });
+      if (locType === 'custom') {
+        const customInput = document.createElement('input');
+        customInput.className = 'input';
+        customInput.id = id;
+        customInput.type = 'text';
+        customInput.placeholder = 'Street, town, postcode';
+        customInput.value = state.form.locationCustom;
+        customInput.addEventListener('input', e => {
+          state.form.locationCustom = e.target.value;
+          renderPreview();
+        });
+        wrap.appendChild(customInput);
+      }
       return wrap;
     }
 
@@ -1992,7 +2028,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     state.form.customerName = '';
     state.form.date = '';
     state.form.time = '';
-    state.form.locationUseBusiness = true;
+    state.form.locationType = 'business';
     state.form.locationCustom = '';
     state.form.service = '';
     state.form.amount = '';
