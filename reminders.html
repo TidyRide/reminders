@@ -586,13 +586,6 @@
       color: var(--danger);
     }
 
-    .placeholder-missing {
-      color: var(--danger);
-      font-weight: 600;
-      background: rgba(255,59,48,0.10);
-      border-radius: 3px;
-      padding: 0 3px;
-    }
     .missing-fields-bar {
       display: none;
       align-items: center;
@@ -1520,6 +1513,8 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       b.addEventListener('click', () => {
         state.templateId = t.id;
         state.manualEdit = false;
+        state.form.locationType   = 'business';
+        state.form.locationCustom = '';
         if (t.defaults) Object.assign(state.form, t.defaults);
         renderAll();
       });
@@ -2441,6 +2436,13 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       loadBtn.textContent = 'Load & send';
       loadBtn.addEventListener('click', () => loadReminderIntoForm(r.id));
 
+      const reschedBtn = document.createElement('button');
+      reschedBtn.className = 'btn ghost';
+      reschedBtn.title = 'Reschedule';
+      reschedBtn.setAttribute('aria-label', 'Reschedule');
+      reschedBtn.textContent = '📅';
+      reschedBtn.addEventListener('click', () => openRescheduleModal(r.id));
+
       const dismissBtn = document.createElement('button');
       dismissBtn.className = 'btn icon';
       dismissBtn.title = 'Dismiss reminder';
@@ -2449,6 +2451,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
       dismissBtn.addEventListener('click', () => dismissReminder(r.id));
 
       actions.appendChild(loadBtn);
+      actions.appendChild(reschedBtn);
       actions.appendChild(dismissBtn);
       row.appendChild(info);
       row.appendChild(when);
@@ -2460,20 +2463,50 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   /* ---- Schedule modal ---- */
   const schedModal = document.getElementById('scheduleModal');
 
+  let rescheduleId = null;
+
   function openScheduleModal() {
     const tpl = getTemplate();
     if (!tpl) { showToast('Pick a template first'); return; }
+    rescheduleId = null;
     document.getElementById('sch_date').value = todayISO(1);
     document.getElementById('sch_time').value = '09:00';
+    document.getElementById('scheduleModalTitle').textContent = 'Schedule reminder';
+    document.getElementById('scheduleModalSave').textContent = 'Save reminder';
     schedModal.classList.add('open');
   }
-  function closeScheduleModal() { schedModal.classList.remove('open'); }
+
+  function openRescheduleModal(id) {
+    const r = state.reminderQueue.find(x => x.id === id);
+    if (!r) return;
+    rescheduleId = id;
+    document.getElementById('sch_date').value = r.sendAt.slice(0, 10);
+    document.getElementById('sch_time').value = r.sendAt.slice(11, 16);
+    document.getElementById('scheduleModalTitle').textContent = 'Reschedule reminder';
+    document.getElementById('scheduleModalSave').textContent = 'Update reminder';
+    schedModal.classList.add('open');
+  }
+
+  function closeScheduleModal() {
+    rescheduleId = null;
+    schedModal.classList.remove('open');
+  }
 
   function saveReminder() {
     const dateVal = document.getElementById('sch_date').value;
     const timeVal = document.getElementById('sch_time').value;
     if (!dateVal) { showToast('Pick a date for the reminder'); return; }
     const sendAt = timeVal ? `${dateVal}T${timeVal}:00` : `${dateVal}T09:00:00`;
+
+    if (rescheduleId) {
+      const r = state.reminderQueue.find(x => x.id === rescheduleId);
+      if (r) { r.sendAt = sendAt; r.notified = false; }
+      saveReminderQueue(state.reminderQueue);
+      closeScheduleModal();
+      renderReminders();
+      showToast('Reminder rescheduled');
+      return;
+    }
 
     const tpl   = getTemplate();
     const phone = state.form.customerPhone.trim();
