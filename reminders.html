@@ -2458,7 +2458,8 @@ If you've got 30 seconds, a quick Google review would really help the business: 
 
       const info = document.createElement('div');
       info.className = 'reminder-info';
-      info.innerHTML = `<div class="reminder-name">${escapeHtml(r.form.customerName || 'Unnamed customer')}</div><div class="reminder-meta">${escapeHtml(tplName)}</div>`;
+      const viaBadge = r.via ? `<span class="history-via ${r.via}" style="margin-left:6px;">${r.via.toUpperCase()}</span>` : '';
+      info.innerHTML = `<div class="reminder-name">${escapeHtml(r.form.customerName || 'Unnamed customer')}</div><div class="reminder-meta">${escapeHtml(tplName)}${viaBadge}</div>`;
 
       const when = document.createElement('div');
       when.className = 'reminder-when';
@@ -2506,22 +2507,31 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (!dateVal) { showToast('Pick a date for the reminder'); return; }
     const sendAt = timeVal ? `${dateVal}T${timeVal}:00` : `${dateVal}T09:00:00`;
 
-    const tpl = getTemplate();
-    const reminder = {
-      id:         generateId(),
+    const tpl   = getTemplate();
+    const phone = state.form.customerPhone.trim();
+    const email = state.form.customerEmail.trim();
+    const vias  = [];
+    if (phone) vias.push('sms');
+    if (email) vias.push('email');
+    if (!vias.length) vias.push('sms');
+
+    const base = {
       createdAt:  new Date().toISOString(),
       sendAt,
       templateId: tpl.id,
       form:       { ...state.form },
       notified:   false
     };
-    state.reminderQueue.push(reminder);
+    vias.forEach(via => {
+      const reminder = { ...base, id: generateId(), via };
+      state.reminderQueue.push(reminder);
+      scheduleSessionNotification(reminder);
+    });
     saveReminderQueue(state.reminderQueue);
     closeScheduleModal();
     renderReminders();
-    showToast('Reminder saved');
+    showToast(vias.length === 2 ? 'Reminders saved — SMS & Email' : 'Reminder saved');
     requestNotificationPermission();
-    scheduleSessionNotification(reminder);
   }
 
   function loadReminderIntoForm(id) {
