@@ -731,6 +731,9 @@
     .sync-status { font-size: 12px; color: var(--text-muted); }
     .sync-status.ok    { color: #34c759; }
     .sync-status.error { color: var(--danger); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #headerSyncBtn.syncing .icon-svg { animation: spin 0.8s linear infinite; }
+    #headerSyncBtn.ok .icon-svg { stroke: #34c759; }
   </style>
 </head>
 <body>
@@ -743,6 +746,9 @@
       <div class="actions">
         <button class="btn icon" id="themeToggle" title="Toggle light/dark" aria-label="Toggle theme">
           <svg class="icon-svg" id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button class="btn icon" id="headerSyncBtn" title="Sync data" aria-label="Sync" hidden>
+          <svg class="icon-svg" id="headerSyncIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         </button>
         <button class="btn icon" id="settingsBtn" title="Settings" aria-label="Open settings">
           <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1485,6 +1491,30 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     showToast(`Theme: ${next}`);
   });
 
+  // Header sync button — visible only when a token is configured
+  const headerSyncBtn = document.getElementById('headerSyncBtn');
+  function updateHeaderSyncVisibility() {
+    headerSyncBtn.hidden = !getGistToken();
+  }
+  updateHeaderSyncVisibility();
+
+  headerSyncBtn.addEventListener('click', async () => {
+    if (headerSyncBtn.classList.contains('syncing')) return;
+    headerSyncBtn.classList.add('syncing');
+    headerSyncBtn.classList.remove('ok');
+    try {
+      const remote = await gistPull();
+      if (remote) { applySyncPayload(remote); renderAll(); }
+      await gistPush();
+      headerSyncBtn.classList.remove('syncing');
+      headerSyncBtn.classList.add('ok');
+      setTimeout(() => headerSyncBtn.classList.remove('ok'), 2000);
+    } catch (e) {
+      headerSyncBtn.classList.remove('syncing');
+      showToast('Sync failed — ' + e.message);
+    }
+  });
+
   /* =========================================================================
      FORMATTERS
      ========================================================================= */
@@ -2219,6 +2249,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     const gistVal  = document.getElementById('gistIdInput').value.trim();
     setGistToken(tokenVal);
     if (gistVal) setGistId(gistVal);
+    updateHeaderSyncVisibility();
     saveSettings(state.settings);
     closeSettings();
     showToast('Settings saved');
