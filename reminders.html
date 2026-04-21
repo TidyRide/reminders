@@ -725,6 +725,12 @@
       padding: 0; margin: -1px; overflow: hidden;
       clip: rect(0,0,0,0); white-space: nowrap; border: 0;
     }
+    .sync-section { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 16px; }
+    .sync-section h3 { font-size: 14px; font-weight: 600; margin: 0 0 4px; color: var(--text); }
+    .sync-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .sync-status { font-size: 12px; color: var(--text-muted); }
+    .sync-status.ok    { color: #34c759; }
+    .sync-status.error { color: var(--danger); }
   </style>
 </head>
 <body>
@@ -848,6 +854,18 @@
       </header>
       <p class="muted" style="margin-top:-6px;font-size:13px;">Saved in this browser only. These fill placeholders like <code>{{businessName}}</code> and the default Location.</p>
       <div class="fields two-col" id="settingsFields"></div>
+      <div class="sync-section">
+        <h3>Sync across devices</h3>
+        <p class="muted" style="font-size:13px;margin:4px 0 10px;">Paste a GitHub personal access token with <code>gist</code> scope. Reminders, queue and history will sync automatically across all your devices.</p>
+        <div class="field full">
+          <label for="gistTokenInput">GitHub token</label>
+          <input class="input" id="gistTokenInput" type="password" placeholder="ghp_...">
+        </div>
+        <div class="sync-row">
+          <button class="btn ghost" id="syncNowBtn" style="font-size:13px;">↻ Sync now</button>
+          <span class="sync-status" id="syncStatus"></span>
+        </div>
+      </div>
       <footer>
         <button class="btn" id="settingsCancel">Cancel</button>
         <button class="btn primary" id="settingsSave">Save</button>
@@ -935,9 +953,9 @@
   function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e){ return []; } }
   function loadQueue2()  { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)   || '[]'); } catch(e){ return []; } }
 
-  function saveRecent(r)  { try { localStorage.setItem(RECENT_KEY,  JSON.stringify(r)); } catch(e){} }
-  function saveHistory(h) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch(e){} }
-  function saveQueue2(q)  { try { localStorage.setItem(QUEUE_KEY,   JSON.stringify(q)); } catch(e){} }
+  function saveRecent(r)  { try { localStorage.setItem(RECENT_KEY,  JSON.stringify(r)); } catch(e){} schedulePush(); }
+  function saveHistory(h) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch(e){} schedulePush(); }
+  function saveQueue2(q)  { try { localStorage.setItem(QUEUE_KEY,   JSON.stringify(q)); } catch(e){} schedulePush(); }
 
   function pushRecent(name, phone, email) {
     if (!name) return;
@@ -1308,6 +1326,99 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   }
   function saveReminderQueue(q) {
     try { localStorage.setItem(REMINDER_KEY, JSON.stringify(q)); } catch (e) {}
+    schedulePush();
+  }
+
+  /* =========================================================================
+     GIST SYNC
+     ========================================================================= */
+  const GIST_TOKEN_KEY = 'tidyride.reminders.gist.token';
+  const GIST_ID_KEY    = 'tidyride.reminders.gist.id';
+  const GIST_FILE      = 'tidyride-reminders.json';
+
+  function getGistToken() { try { return localStorage.getItem(GIST_TOKEN_KEY) || ''; } catch(e) { return ''; } }
+  function setGistToken(t) { try { localStorage.setItem(GIST_TOKEN_KEY, t); } catch(e) {} }
+  function getGistId()    { try { return localStorage.getItem(GIST_ID_KEY)    || ''; } catch(e) { return ''; } }
+  function setGistId(id)  { try { localStorage.setItem(GIST_ID_KEY, id);             } catch(e) {} }
+
+  function getSyncPayload() {
+    return {
+      reminderQueue:   state ? state.reminderQueue : loadReminderQueue(),
+      queue2:          loadQueue2(),
+      history:         loadHistory(),
+      recentCustomers: loadRecent(),
+      syncedAt:        new Date().toISOString()
+    };
+  }
+
+  function applySyncPayload(data) {
+    if (!data) return;
+    if (Array.isArray(data.reminderQueue)) {
+      state.reminderQueue = data.reminderQueue;
+      try { localStorage.setItem(REMINDER_KEY, JSON.stringify(data.reminderQueue)); } catch(e) {}
+    }
+    if (Array.isArray(data.queue2))          try { localStorage.setItem(QUEUE_KEY,   JSON.stringify(data.queue2));          } catch(e) {}
+    if (Array.isArray(data.history))         try { localStorage.setItem(HISTORY_KEY, JSON.stringify(data.history));         } catch(e) {}
+    if (Array.isArray(data.recentCustomers)) try { localStorage.setItem(RECENT_KEY,  JSON.stringify(data.recentCustomers)); } catch(e) {}
+  }
+
+  function setSyncStatus(msg, type) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'sync-status' + (type ? ' ' + type : '');
+  }
+
+  async function gistPush() {
+    const token = getGistToken();
+    if (!token) return;
+    const gistId = getGistId();
+    const body = { files: { [GIST_FILE]: { content: JSON.stringify(getSyncPayload(), null, 2) } } };
+    let url = 'https://api.github.com/gists';
+    let method = 'POST';
+    if (gistId) {
+      url = `https://api.github.com/gists/${gistId}`;
+      method = 'PATCH';
+    } else {
+      body.description = 'TidyRide Reminders sync';
+      body.public = false;
+    }
+    const res = await fetch(url, {
+      method,
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) { const t = await res.text(); throw new Error(`GitHub ${res.status}`); }
+    const json = await res.json();
+    if (!gistId) setGistId(json.id);
+  }
+
+  async function gistPull() {
+    const token  = getGistToken();
+    const gistId = getGistId();
+    if (!token || !gistId) return null;
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (!res.ok) throw new Error(`GitHub ${res.status}`);
+    const gist = await res.json();
+    const file = gist.files[GIST_FILE];
+    return file ? JSON.parse(file.content) : null;
+  }
+
+  let pushTimer = null;
+  function schedulePush() {
+    if (!getGistToken()) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(async () => {
+      try {
+        setSyncStatus('Syncing…');
+        await gistPush();
+        setSyncStatus('Synced ' + new Date().toLocaleTimeString(), 'ok');
+      } catch (e) {
+        setSyncStatus('Sync failed — ' + e.message, 'error');
+      }
+    }, 2000);
   }
 
   /* =========================================================================
@@ -2043,6 +2154,8 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   const modal = document.getElementById('settingsModal');
   function openSettings() {
     renderSettingsFields();
+    document.getElementById('gistTokenInput').value = getGistToken();
+    setSyncStatus('');
     modal.classList.add('open');
   }
   function closeSettings() { modal.classList.remove('open'); }
@@ -2094,10 +2207,29 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (state.form.signature === prevSignature) {
       state.form.signature = state.settings.signature;
     }
+    // Save gist token (stored separately, never synced)
+    const tokenVal = document.getElementById('gistTokenInput').value.trim();
+    setGistToken(tokenVal);
     saveSettings(state.settings);
     closeSettings();
     showToast('Settings saved');
     renderAll();
+  });
+
+  document.getElementById('syncNowBtn').addEventListener('click', async () => {
+    const tokenVal = document.getElementById('gistTokenInput').value.trim();
+    if (!tokenVal) { setSyncStatus('Paste a GitHub token first', 'error'); return; }
+    setGistToken(tokenVal);
+    setSyncStatus('Syncing…');
+    try {
+      // Pull first, then push so we get remote changes before overwriting
+      const remote = await gistPull();
+      if (remote) { applySyncPayload(remote); renderAll(); }
+      await gistPush();
+      setSyncStatus('Synced ' + new Date().toLocaleTimeString(), 'ok');
+    } catch (e) {
+      setSyncStatus('Failed — ' + e.message, 'error');
+    }
   });
 
   /* =========================================================================
@@ -2640,6 +2772,16 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     renderQueue2();
   }
   renderAll();
+
+  // Pull from Gist on startup if token + ID are stored
+  (async () => {
+    if (getGistToken() && getGistId()) {
+      try {
+        const remote = await gistPull();
+        if (remote) { applySyncPayload(remote); renderAll(); checkDueReminders(); scheduleSessionNotifications(); }
+      } catch (_) { /* silent — app works fine offline */ }
+    }
+  })();
 
   // Template search
   document.getElementById('templateSearch').addEventListener('input', renderTemplates);
