@@ -856,10 +856,16 @@
       <div class="fields two-col" id="settingsFields"></div>
       <div class="sync-section">
         <h3>Sync across devices</h3>
-        <p class="muted" style="font-size:13px;margin:4px 0 10px;">Paste a GitHub personal access token with <code>gist</code> scope. Reminders, queue and history will sync automatically across all your devices.</p>
-        <div class="field full">
-          <label for="gistTokenInput">GitHub token</label>
-          <input class="input" id="gistTokenInput" type="password" placeholder="ghp_...">
+        <p class="muted" style="font-size:13px;margin:4px 0 10px;">Enter a GitHub token (<code>gist</code> scope) and hit Sync. On your first sync a Gist ID will appear — paste it into any other device alongside the same token.</p>
+        <div class="fields two-col">
+          <div class="field">
+            <label for="gistTokenInput">GitHub token</label>
+            <input class="input" id="gistTokenInput" type="password" placeholder="ghp_...">
+          </div>
+          <div class="field">
+            <label for="gistIdInput">Gist ID</label>
+            <input class="input" id="gistIdInput" type="text" placeholder="Auto-filled after first sync">
+          </div>
         </div>
         <div class="sync-row">
           <button class="btn ghost" id="syncNowBtn" style="font-size:13px;">↻ Sync now</button>
@@ -2155,6 +2161,7 @@ If you've got 30 seconds, a quick Google review would really help the business: 
   function openSettings() {
     renderSettingsFields();
     document.getElementById('gistTokenInput').value = getGistToken();
+    document.getElementById('gistIdInput').value    = getGistId();
     setSyncStatus('');
     modal.classList.add('open');
   }
@@ -2207,9 +2214,11 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     if (state.form.signature === prevSignature) {
       state.form.signature = state.settings.signature;
     }
-    // Save gist token (stored separately, never synced)
+    // Save gist token + ID (stored separately, never synced)
     const tokenVal = document.getElementById('gistTokenInput').value.trim();
+    const gistVal  = document.getElementById('gistIdInput').value.trim();
     setGistToken(tokenVal);
+    if (gistVal) setGistId(gistVal);
     saveSettings(state.settings);
     closeSettings();
     showToast('Settings saved');
@@ -2218,14 +2227,18 @@ If you've got 30 seconds, a quick Google review would really help the business: 
 
   document.getElementById('syncNowBtn').addEventListener('click', async () => {
     const tokenVal = document.getElementById('gistTokenInput').value.trim();
+    const gistVal  = document.getElementById('gistIdInput').value.trim();
     if (!tokenVal) { setSyncStatus('Paste a GitHub token first', 'error'); return; }
     setGistToken(tokenVal);
+    if (gistVal) setGistId(gistVal); // save manually-entered Gist ID before syncing
     setSyncStatus('Syncing…');
     try {
-      // Pull first, then push so we get remote changes before overwriting
+      // Pull first (if we have a gist ID), then push
       const remote = await gistPull();
       if (remote) { applySyncPayload(remote); renderAll(); }
       await gistPush();
+      // After push, show the Gist ID in the field (important after first-ever sync)
+      document.getElementById('gistIdInput').value = getGistId();
       setSyncStatus('Synced ' + new Date().toLocaleTimeString(), 'ok');
     } catch (e) {
       setSyncStatus('Failed — ' + e.message, 'error');
