@@ -878,6 +878,15 @@
           <span class="sync-status" id="syncStatus"></span>
         </div>
       </div>
+      <div class="sync-section">
+        <h3>Backup &amp; restore</h3>
+        <p class="muted" style="font-size:13px;margin:4px 0 10px;">Download all your reminders and settings as a JSON file, or restore from a previous backup.</p>
+        <div class="sync-row">
+          <button class="btn ghost" id="exportJsonBtn" style="font-size:13px;">↓ Download backup</button>
+          <button class="btn ghost" id="importJsonBtn" style="font-size:13px;">↑ Restore backup</button>
+          <input type="file" id="importJsonFile" accept=".json" style="display:none">
+        </div>
+      </div>
       <footer>
         <button class="btn" id="settingsCancel">Cancel</button>
         <button class="btn primary" id="settingsSave">Save</button>
@@ -2274,6 +2283,47 @@ If you've got 30 seconds, a quick Google review would really help the business: 
     } catch (e) {
       setSyncStatus('Failed — ' + e.message, 'error');
     }
+  });
+
+  /* =========================================================================
+     JSON BACKUP & RESTORE
+     ========================================================================= */
+  document.getElementById('exportJsonBtn').addEventListener('click', () => {
+    const payload = getSyncPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `tidyride-reminders-backup-${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Backup downloaded');
+  });
+
+  document.getElementById('importJsonBtn').addEventListener('click', () => {
+    document.getElementById('importJsonFile').click();
+  });
+
+  document.getElementById('importJsonFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const payload = JSON.parse(ev.target.result);
+        applySyncPayload(payload);
+        renderAll();
+        checkDueReminders();
+        scheduleSessionNotifications();
+        showToast('Backup restored');
+        closeSettings();
+      } catch (_) {
+        showToast('Could not read backup file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   });
 
   /* =========================================================================
